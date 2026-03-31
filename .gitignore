@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environments
+venv/
+.env
+
+# Data
+data/raw/
+data/processed/
+embeddings/
+checkpoints/
+
+# Models
+models/
+*.bin
+*.pt
+*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
