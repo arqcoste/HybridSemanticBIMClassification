@@ -70,10 +70,14 @@ def detect_domain_from_ifc(elements):
     # DECISIÓN
     # -------------------------
 
-    domain = max(counts, key=counts.get)
-
     print("\n🔹 DOMAIN DETECTION:")
     print(counts)
+
+    if max(counts.values()) == 0:
+        print("⚠️  No se reconoció ningún tipo IFC — dominio por defecto: architecture")
+        return "architecture"
+
+    domain = max(counts, key=counts.get)
     print("➡️ Dominio detectado:", domain)
 
     return domain

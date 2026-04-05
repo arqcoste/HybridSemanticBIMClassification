@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EF — Firma Semántica Escalonada por Dominio (Uniclass 2015 / IFC 4x3)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f9f8f5;color:#1a1a18;font-size:14px}
+
+.header{padding:12px 16px;background:#fff;border-bottom:1px solid #d3d1c7}
+.header h1{font-size:15px;font-weight:500;color:#1a1a18}
+.header p{font-size:11px;color:#888780;margin-top:3px}
+
+.dtabs{display:flex;gap:2px;padding:0 12px;border-bottom:2px solid #d3d1c7;background:#fff}
+.dtab{padding:10px 20px;font-size:12px;font-weight:500;color:#5f5e5a;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.dtab:hover{color:#1a1a18}
+.dtab.on{color:#1a1a18;border-bottom-color:#1a1a18}
+
+.dbadge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:500;margin:10px 12px 4px}
+.dbadge-est{background:#e6f1fb;color:#0c447c;border:1px solid #85b7eb}
+.dbadge-arq{background:#fbeaf0;color:#72243e;border:1px solid #ed93b1}
+.dbadge-mep{background:#faeeda;color:#633806;border:1px solid #ef9f27}
+
+.levels{padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.level{border:1px solid #d3d1c7;border-radius:8px;overflow:hidden;background:#fff}
+.level-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f1efe8;cursor:default;user-select:none}
+.level-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.ln1{background:#e1f5ee;color:#085041}
+.ln2{background:#eeedfe;color:#3c3489}
+.ln3{background:#faece7;color:#712b13}
+.level-title{font-size:12px;font-weight:500;color:#1a1a18;flex:1}
+.level-code{font-family:'Courier New',monospace;font-size:11px;color:#888780}
+.level-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+
+.frow{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
+.flabel{font-size:10px;font-weight:500;color:#888780;min-width:72px;padding-top:3px;flex-shrink:0}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{font-family:'Courier New',monospace;font-size:10px;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
+.c-ent {background:#e1f5ee;color:#085041;border-color:#5dcaa5}
+.c-pset{background:#eeedfe;color:#3c3489;border-color:#afa9ec}
+.c-attr{background:#faeeda;color:#633806;border-color:#ef9f27}
+.c-val {background:#faece7;color:#712b13;border-color:#f0997b}
+.c-sys {background:#e6f1fb;color:#0c447c;border-color:#85b7eb}
+.c-note{background:#f1efe8;color:#444441;border-color:#b4b2a9}
+
+.sig-section{margin:4px 12px 8px;border:1px solid #d3d1c7;border-radius:8px;overflow:hidden;background:#fff}
+.sig-header{padding:6px 12px;background:#f1efe8;font-size:11px;font-weight:500;color:#5f5e5a;border-bottom:1px solid #d3d1c7}
+.sig-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sig-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sig-level-tag{font-size:9px;font-weight:500;padding:2px 6px;border-radius:3px;flex-shrink:0;min-width:52px;text-align:center}
+.sl1{background:#e1f5ee;color:#085041}
+.sl2{background:#eeedfe;color:#3c3489}
+.sl3{background:#faece7;color:#712b13}
+.sig-raw{font-family:'Courier New',monospace;font-size:11px;color:#1a1a18;flex:1;line-height:1.9}
+.sig-raw .k{color:#185fa5}
+.sig-raw .v{color:#27500a}
+.sig-raw .op{color:#888780}
+.sig-raw .ef{font-weight:500;color:#1a1a18}
+.arrow-row{font-size:11px;color:#888780;padding:0 0 0 60px;font-family:'Courier New',monospace}
+
+.full-sig{margin:6px 0 2px;padding:10px 12px;background:#f1efe8;border-radius:6px;border:1px solid #d3d1c7}
+.full-sig-label{font-size:10px;font-weight:500;color:#888780;margin-bottom:5px}
+
+.decision-notes{padding:0 12px 12px;display:flex;flex-direction:column;gap:6px}
+.decision-note{font-size:11px;color:#5f5e5a;padding:7px 10px;background:#fff;border-radius:4px;border:1px solid #e8e6df;line-height:1.6}
+.decision-note strong{font-size:10px;color:#1a1a18}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>EF — Firma semántica escalonada por dominio</h1>
+  <p>Uniclass 2015 v1.16 · IFC 4x3 · Perfil de atributos mínimos por nivel de granularidad</p>
+</div>
+
+<div class="dtabs">
+  <div class="dtab on" id="dt-est" onclick="setDomain('est')">Estructura (EST)</div>
+  <div class="dtab"    id="dt-arq" onclick="setDomain('arq')">Arquitectura (ARQ)</div>
+  <div class="dtab"    id="dt-mep" onclick="setDomain('mep')">MEP</div>
+</div>
+
+<div id="domain-content"></div>
+
+<script>
+const DOMAINS={
+  est:{
+    badge:'dbadge-est',
+    label:'Dominio: Estructura — el engine ya lo sabe antes de construir la firma',
+    levels:[
+      {num:'L1',nc:'ln1',sl:'sl1',
+       title:'Nivel 1 → EF_XX  (Grupo)',
+       code:'EF_20 / EF_37',
+       fields:[
+         {label:'Entidad IFC',type:'c-ent',chips:['IfcBeam','IfcColumn','IfcMember','IfcPlate','IfcSlab','IfcPile','IfcFooting','IfcCivilElement']},
+         {label:'Atributo',type:'c-attr',chips:['PredefinedType']},
+         {label:'Decisión',type:'c-val',chips:['IfcType → mapeo directo a grupo EF','No se necesita ningún Pset en este nivel']}
+       ],
+       raw:'<span class="k">IfcType</span><span class="op">:</span><span class="v">{IfcBeam|IfcColumn|IfcSlab|IfcPile|IfcCivilElement…}</span>',
+       result:'EF_20 (estructural) / EF_37 (civil especial)',
+       note:'El IfcType solo resuelve el grupo. Con eso el clasificador ya sabe que es EF_20 o EF_37 y descarta todos los demás grupos.'
+      },
+      {num:'L2',nc:'ln2',sl:'sl2',
+       title:'Nivel 2 → EF_XX_XX  (Subgrupo)',
+       code:'EF_20_05 / EF_20_10 / EF_20_50',
+       fields:[
+         {label:'Pset',type:'c-pset',chips:['Pset_BeamCommon','Pset_ColumnCommon','Pset_SlabCommon','Pset_PileCommon','Pset_PlateCommon','Pset_MemberCommon']},
+         {label:'Atributos',type:'c-attr',chips:['LoadBearing = TRUE/FALSE','IfcBuildingStorey.Elevation (≤0 / >0)']},
+         {label:'Decisión',type:'c-val',chips:['LoadBearing=TRUE + Elevation≤0 → EF_20_05 (substructure)','LoadBearing=TRUE + Elevation>0 → EF_20_10 (superstructure)','IfcCivilElement → EF_20_50 (bridge)']}
+       ],
+       raw:'<span class="k">LoadBearing</span><span class="op">:</span><span class="v">{TRUE|FALSE}</span> <span class="op">|</span> <span class="k">Elevation</span><span class="op">:</span><span class="v">{float}</span>',
+       result:'EF_20_05 / EF_20_10 / EF_20_50',
+       note:'LoadBearing es el único Pset necesario para diferenciar substructure vs superstructure. Elevation del storey separa lo que está bajo rasante.'
+      },
+      {num:'L3',nc:'ln3',sl:'sl3',
+       title:'Nivel 3 → EF_XX_XX_XX  (Sección — código final)',
+       code:'EF_20_10_30 / EF_20_10_50 / EF_20_05_30…',
+       fields:[
+         {label:'Pset',type:'c-pset',chips:['Pset_BeamCommon','Pset_ColumnCommon','Pset_PlateCommon']},
+         {label:'Atributos',type:'c-attr',chips:['ProfileDef.Name (IPE/HEB/HEA/CHS/RHS…)','Material.Name (S355/C30/C40…)','PredefinedType (BEAM/COLUMN/PLATE)']},
+         {label:'Decisión',type:'c-val',chips:['PredefinedType=BEAM/COLUMN + ProfileDef → EF_20_10_30 (framed)','PredefinedType=PLATE + chapa → EF_20_10_50 (membrane)','Material=hormigón + muro → EF_20_10_80 (solid)','IfcPile / BASESLAB → EF_20_05_30 (foundations)']}
+       ],
+       raw:'<span class="k">PredefinedType</span><span class="op">:</span><span class="v">{BEAM|COLUMN|PLATE}</span> <span class="op">|</span> <span class="k">ProfileDef</span><span class="op">:</span><span class="v">{IPE300|HEB200|…}</span> <span class="op">|</span> <span class="k">Material</span><span class="op">:</span><span class="v">{S355|C30/37}</span>',
+       result:'EF_20_10_30 (código final)',
+       note:'ProfileDef y Material son los que dan la granularidad fina. Tekla los exporta siempre por defecto — son los campos más confiables del modelo estructural.'
+      }
+    ],
+    fullSig:'<span class="k">IfcType</span> <span class="op">|</span> <span class="k">LoadBearing</span> <span class="op">|</span> <span class="k">Elevation</span> <span class="op">|</span> <span class="k">PredefinedType</span> <span class="op">|</span> <span class="k">ProfileDef</span> <span class="op">|</span> <span class="k">Material</span>'
+  },
+
+  arq:{
+    badge:'dbadge-arq',
+    label:'Dominio: Arquitectura — el engine ya lo sabe antes de construir la firma',
+    levels:[
+      {num:'L1',nc:'ln1',sl:'sl1',
+       title:'Nivel 1 → EF_XX  (Grupo)',
+       code:'EF_25 / EF_30 / EF_35',
+       fields:[
+         {label:'Entidad IFC',type:'c-ent',chips:['IfcWall','IfcSlab','IfcRoof','IfcDoor','IfcWindow','IfcStair','IfcRamp','IfcCovering','IfcRailing','IfcCurtainWall']},
+         {label:'Decisión',type:'c-val',chips:['IfcWall/IfcCurtainWall → EF_25','IfcSlab/IfcRoof → EF_30','IfcStair/IfcRamp → EF_35','IfcDoor/IfcWindow → EF_25 (openings)']}
+       ],
+       raw:'<span class="k">IfcType</span><span class="op">:</span><span class="v">{IfcWall|IfcSlab|IfcRoof|IfcDoor|IfcWindow|IfcStair|IfcRamp…}</span>',
+       result:'EF_25 / EF_30 / EF_35',
+       note:'Igual que en EST — el IfcType resuelve el grupo sin necesitar ningún Pset.'
+      },
+      {num:'L2',nc:'ln2',sl:'sl2',
+       title:'Nivel 2 → EF_XX_XX  (Subgrupo)',
+       code:'EF_25_10 / EF_25_30 / EF_30_10 / EF_30_20…',
+       fields:[
+         {label:'Pset',type:'c-pset',chips:['Pset_WallCommon','Pset_SlabCommon','Pset_RoofCommon','Pset_DoorCommon','Pset_WindowCommon','Pset_StairCommon','Pset_RampCommon']},
+         {label:'Atributos',type:'c-attr',chips:['IsExternal = TRUE/FALSE','PredefinedType (ROOF/FLOOR/PARAPET…)','IfcBuildingStorey.Elevation']},
+         {label:'Decisión',type:'c-val',chips:['IfcWall → EF_25_10 (walls) / EF_25_55 (barriers)','IfcDoor/IfcWindow → EF_25_30 (openings)','IfcRoof/IfcSlab:ROOF → EF_30_10','IfcSlab:FLOOR → EF_30_20','IfcStair → EF_35_10 / IfcRamp → EF_35_20']}
+       ],
+       raw:'<span class="k">IsExternal</span><span class="op">:</span><span class="v">{TRUE|FALSE}</span> <span class="op">|</span> <span class="k">PredefinedType</span><span class="op">:</span><span class="v">{ROOF|FLOOR|PARAPET…}</span> <span class="op">|</span> <span class="k">Elevation</span><span class="op">:</span><span class="v">{float}</span>',
+       result:'EF_25_10 / EF_25_30 / EF_30_10 / EF_30_20…',
+       note:'IsExternal es el discriminador más simple y confiable para arquitectura. PredefinedType resuelve los subtipos de cubierta y losa.'
+      },
+      {num:'L3',nc:'ln3',sl:'sl3',
+       title:'Nivel 3 → EF_XX_XX_XX  (Sección — código final)',
+       code:'EF_25_10_25 / EF_25_10_40 / EF_30_10_30…',
+       fields:[
+         {label:'Pset',type:'c-pset',chips:['Pset_WallCommon','Pset_SlabCommon','Pset_RoofCommon','Pset_CoveringCommon','Pset_StairCommon']},
+         {label:'Atributos',type:'c-attr',chips:['IsExternal','LoadBearing','PredefinedType (FLAT_ROOF/GABLE_ROOF…)','Elevation < 0 / = 0 / > 0']},
+         {label:'Decisión',type:'c-val',chips:['IsExternal=TRUE → EF_25_10_25 (ext wall)','IsExternal=FALSE → EF_25_10_40 (int wall)','PredefinedType=FLAT_ROOF → EF_30_10_30','Elevation=0 → EF_30_20_34 (ground floor)','Elevation>0 → EF_30_20_93 (upper floor)','IsExternal=TRUE en stair → EF_35_10_30']}
+       ],
+       raw:'<span class="k">IsExternal</span><span class="op">:</span><span class="v">{TRUE|FALSE}</span> <span class="op">|</span> <span class="k">LoadBearing</span><span class="op">:</span><span class="v">{TRUE|FALSE}</span> <span class="op">|</span> <span class="k">PredefinedType</span><span class="op">:</span><span class="v">{FLAT_ROOF|GABLE_ROOF…}</span> <span class="op">|</span> <span class="k">Elevation</span><span class="op">:</span><span class="v">{0|-3.5|4.2}</span>',
+       result:'EF_25_10_25 (código final)',
+       note:'Con solo IsExternal + LoadBearing + PredefinedType + Elevation se resuelven el 95% de los casos en arquitectura. Sin necesitar ningún atributo de usuario.'
+      }
+    ],
+    fullSig:'<span class="k">IfcType</span> <span class="op">|</span> <span class="k">IsExternal</span> <span class="op">|</span> <span class="k">LoadBearing</span> <span class="op">|</span> <span class="k">PredefinedType</span> <span class="op">|</span> <span class="k">Elevation</span>'
+  },
+
+  mep:{
+    badge:'dbadge-mep',
+    label:'Dominio: MEP — el engine ya lo sabe antes de construir la firma',
+    levels:[
+      {num:'L1',nc:'ln1',sl:'sl1',
+       title:'Nivel 1 → EF_XX  (Grupo)',
+       code:'EF_50 / EF_55 / EF_60 / EF_65 / EF_70 / EF_75',
+       fields:[
+         {label:'Entidad IFC',type:'c-ent',chips:['IfcDistributionSystem','IfcFlowSegment','IfcDistributionFlowElement']},
+         {label:'Atributo clave',type:'c-attr',chips:['IfcDistributionSystem.PredefinedType']},
+         {label:'Mapeo',type:'c-val',chips:['WASTEWATER/DRAINAGE → EF_50','GAS/WATERSUPPLY/FIREPROTECTION → EF_55','HEATING/REFRIGERATION → EF_60','VENTILATION/AIRCONDITIONING → EF_65','ELECTRICAL/LIGHTING/POWERGENERATION → EF_70','COMMUNICATION/SECURITY/MONITORINGSYSTEM/CONTROL → EF_75']}
+       ],
+       raw:'<span class="k">DistributionSystem.PredefinedType</span><span class="op">:</span><span class="v">{HEATING|VENTILATION|ELECTRICAL|WASTEWATER|GAS|SECURITY…}</span>',
+       result:'EF_50 / EF_55 / EF_60 / EF_65 / EF_70 / EF_75',
+       note:'En MEP el grupo se resuelve 100% con IfcDistributionSystem.PredefinedType. No se necesita mirar ningún otro campo en L1.'
+      },
+      {num:'L2',nc:'ln2',sl:'sl2',
+       title:'Nivel 2 → EF_XX_XX  (Subgrupo)',
+       code:'EF_60_40 / EF_65_40 / EF_65_80 / EF_70_30 / EF_70_80…',
+       fields:[
+         {label:'Entidad IFC',type:'c-ent',chips:['IfcFlowTerminal','IfcFlowSegment','IfcEnergyConversionDevice','IfcFlowController']},
+         {label:'Pset',type:'c-pset',chips:['Pset_SpaceHeaterCommon','Pset_AirTerminalCommon','Pset_FanCommon','Pset_LightFixtureCommon','Pset_PipeSegmentCommon','Pset_DuctSegmentCommon']},
+         {label:'Atributos',type:'c-attr',chips:['IfcBuildingStorey.Elevation (above/below ground para drenaje)','ObjectType keyword (heating/cooling/supply/extract)','PredefinedType del terminal (AIRHANDLER/SPLITSYSTEM/SPRINKLER…)']},
+         {label:'Decisión',type:'c-val',chips:['HEATING + IfcSpaceHeater → EF_60_40','VENTILATION + IfcDuctSegment → EF_65_40','AIRCONDITIONING + IfcUnitaryEquipment → EF_65_80','ELECTRICAL + IfcCableSegment → EF_70_30','LIGHTING + IfcLightFixture → EF_70_80','DRAINAGE + Elevation<0 → EF_50_35 / Elevation≥0 → EF_50_30']}
+       ],
+       raw:'<span class="k">TerminalType</span><span class="op">:</span><span class="v">{IfcSpaceHeater|IfcAirTerminal|IfcLightFixture|IfcPipeSegment…}</span> <span class="op">|</span> <span class="k">Elevation</span><span class="op">:</span><span class="v">{float}</span> <span class="op">|</span> <span class="k">ObjectType</span><span class="op">:</span><span class="v">{"heating"|"supply"|"extract"…}</span>',
+       result:'EF_60_40 / EF_65_40 / EF_65_80 / EF_70_30…',
+       note:'En L2 la entidad del terminal + la elevación + un keyword en ObjectType es todo lo que se necesita. Los Psets confirman pero raramente son el único discriminador.'
+      },
+      {num:'L3',nc:'ln3',sl:'sl3',
+       title:'Nivel 3 → EF_XX_XX_XX  (Sección — código final)',
+       code:'EF_60_40_37 / EF_65_40_33 / EF_70_30_45 / EF_55_30_96…',
+       fields:[
+         {label:'Pset',type:'c-pset',chips:['Pset_SpaceHeaterCommon.HeatTransferMedium','Pset_AirTerminalCommon.AirTerminalAirflowType','Pset_CableSegmentCommon.NominalVoltage','Pset_LightFixtureCommon.LightFixtureMountingType','Pset_SensorCommon.SensorType','Pset_AlarmCommon.AlarmType','Pset_DamperCommon.DamperOperation','Pset_FireSuppressionTerminalCommon (PredefinedType)']},
+         {label:'Atributos',type:'c-attr',chips:['HeatTransferMedium = WATER/STEAM/AIR','AirflowType = SUPPLYAIR/EXHAUSTAIR','NominalVoltage ≤1kV / 1-35kV / >35kV','SensorType = SMOKESENSOR/GASSENSOR','AlarmType = FIRE/BURGLAR','DamperOperation = SMOKECONTROL','IsExternal (lighting)','ObjectType keyword (foam/CO2/bored/primary…)']},
+         {label:'Decisión',type:'c-val',chips:['HeatTransferMedium → heating vs cooling','AirflowType → supply vs extract vs smoke','NominalVoltage → LV/MV/HV distribution','AlarmType → fire/gas/security detection','ObjectType → foam/gaseous/water fire suppression']}
+       ],
+       raw:'<span class="k">Pset_*Common.KeyAttr</span><span class="op">:</span><span class="v">{HeatTransferMedium|AirflowType|NominalVoltage|SensorType|AlarmType…}</span> <span class="op">|</span> <span class="k">ObjectType</span><span class="op">:</span><span class="v">{"foam"|"smoke"|"CO2"|"primary"…}</span>',
+       result:'EF_60_40_37 / EF_65_40_80 / EF_70_30_45 (código final)',
+       note:'En L3 MEP los Psets son el discriminador principal — ya no basta el tipo de entidad. NominalVoltage, SensorType y AirflowType son los tres más importantes y siempre están en los Psets comunes de IFC 4x3.'
+      }
+    ],
+    fullSig:'<span class="k">DistributionSystem.PredefinedType</span> <span class="op">|</span> <span class="k">TerminalEntity</span> <span class="op">|</span> <span class="k">Elevation</span> <span class="op">|</span> <span class="k">Pset_*.KeyAttr</span> <span class="op">|</span> <span class="k">ObjectType</span>'
+  }
+};
+
+function setDomain(d){
+  ['est','arq','mep'].forEach(x=>document.getElementById('dt-'+x).className='dtab'+(x===d?' on':''));
+  renderDomain(d);
+}
+
+function renderDomain(d){
+  const dom=DOMAINS[d];
+  const c=document.getElementById('domain-content');
+  let html=`<div class="dbadge ${dom.badge}">${dom.label}</div>`;
+
+  // levels
+  html+=`<div class="levels">`;
+  dom.levels.forEach(lv=>{
+    html+=`<div class="level">
+      <div class="level-header">
+        <span class="level-num ${lv.nc}">${lv.num}</span>
+        <span class="level-title">${lv.title}</span>
+        <span class="level-code">${lv.code}</span>
+      </div>
+      <div class="level-body">`;
+    lv.fields.forEach(f=>{
+      html+=`<div class="frow"><span class="flabel">${f.label}</span><div class="chips">${f.chips.map(ch=>`<span class="chip ${f.type}">${ch}</span>`).join('')}</div></div>`;
+    });
+    html+=`</div></div>`;
+  });
+  html+=`</div>`;
+
+  // raw signature section
+  html+=`<div class="sig-section">
+    <div class="sig-header">Perfil de firma RAW escalonada — dominio ${d.toUpperCase()}</div>
+    <div class="sig-body">`;
+
+  dom.levels.forEach((lv,i)=>{
+    html+=`<div class="sig-row">
+      <span class="sig-level-tag ${lv.sl}">${lv.num} → ${lv.code.split('/')[0].trim()}</span>
+      <span class="sig-raw">${lv.raw} <span class="op">→</span> <span class="ef">${lv.result}</span></span>
+    </div>`;
+    if(i < dom.levels.length-1){
+      html+=`<div class="arrow-row">↓ si no es suficiente, añade ${dom.levels[i+1].num}</div>`;
+    }
+  });
+
+  html+=`<div class="full-sig">
+    <div class="full-sig-label">FIRMA COMPLETA (todos los niveles concatenados)</div>
+    <div class="sig-raw" style="line-height:2">${dom.fullSig}</div>
+  </div>`;
+
+  html+=`</div></div>`;
+
+  // decision notes
+  html+=`<div class="decision-notes">`;
+  dom.levels.forEach(lv=>{
+    html+=`<div class="decision-note"><strong>${lv.num}:</strong> ${lv.note}</div>`;
+  });
+  html+=`</div>`;
+
+  c.innerHTML=html;
+}
+
+renderDomain('est');
+</script>
+</body>
+</html>

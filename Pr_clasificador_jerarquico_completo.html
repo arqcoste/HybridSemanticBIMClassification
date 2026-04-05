@@ -1,0 +1,691 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.w{font-family:var(--font-sans)}
+.tabs{display:flex;gap:2px;padding:0 12px;border-bottom:2px solid var(--color-border-secondary);flex-wrap:wrap}
+.tab{padding:8px 12px;font-size:12px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:var(--color-text-primary)}
+.tab.on{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary)}
+.builder{display:flex;align-items:center;gap:4px;padding:8px 12px;background:var(--color-background-secondary);border-bottom:1px solid var(--color-border-tertiary);flex-wrap:wrap}
+.seg-label{font-size:10px;color:var(--color-text-tertiary);margin-right:1px}
+.seg{font-family:var(--font-mono);font-size:12px;font-weight:500;padding:4px 10px;border-radius:4px;border:1px dashed var(--color-border-secondary);color:var(--color-text-tertiary);transition:all .2s;min-width:36px;text-align:center}
+.seg.on{border-style:solid;color:var(--color-text-primary);background:var(--color-background-primary)}
+.sep{font-family:var(--font-mono);color:var(--color-text-tertiary);font-size:14px}
+.result{margin-left:auto;font-family:var(--font-mono);font-size:11px;font-weight:500;padding:5px 12px;border-radius:6px;border:1px solid var(--color-border-secondary);color:var(--color-text-secondary);min-width:240px;text-align:center;transition:all .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result.lit{background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success)}
+.pset-panel{padding:7px 12px;border-bottom:1px solid var(--color-border-tertiary);min-height:44px;display:flex;flex-direction:column;gap:4px}
+.pset-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.pset-label{font-size:10px;font-weight:500;color:var(--color-text-tertiary);min-width:88px;flex-shrink:0}
+.chip{font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
+.c-ent{background:#E1F5EE;color:#085041;border-color:#5DCAA5}
+.c-pset{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC}
+.c-attr{background:#FAEEDA;color:#633806;border-color:#EF9F27}
+.c-mat{background:#E6F1FB;color:#0C447C;border-color:#85B7EB}
+.c-val{background:#FAECE7;color:#712B13;border-color:#F0997B}
+@media(prefers-color-scheme:dark){
+.c-ent{background:#085041;color:#9FE1CB;border-color:#0F6E56}
+.c-pset{background:#3C3489;color:#CECBF6;border-color:#534AB7}
+.c-attr{background:#633806;color:#FAC775;border-color:#854F0B}
+.c-mat{background:#0C447C;color:#B5D4F4;border-color:#185FA5}
+.c-val{background:#712B13;color:#F5C4B3;border-color:#993C1D}
+}
+.hint{font-size:11px;color:var(--color-text-tertiary);font-style:italic;padding:4px 0}
+.pr-note{font-size:10px;color:var(--color-text-tertiary);padding:4px 12px;background:var(--color-background-secondary);border-bottom:1px solid var(--color-border-tertiary);font-style:italic}
+.tree{max-height:500px;overflow:auto}
+.row{cursor:pointer;border-bottom:1px solid var(--color-border-tertiary)}
+.row:hover .ri{background:var(--color-background-secondary)}
+.row.sel .ri{background:var(--color-background-success)!important}
+.ri{display:grid;align-items:center;gap:6px;padding:6px 8px;transition:background .15s}
+.ri.d1{grid-template-columns:14px 80px 1fr;padding-left:8px}
+.ri.d2{grid-template-columns:14px 110px 1fr;padding-left:24px}
+.ri.d3{grid-template-columns:14px 130px 1fr;padding-left:44px}
+.tog{font-size:10px;color:var(--color-text-tertiary);text-align:center}
+.pill{font-family:var(--font-mono);font-size:10px;font-weight:500;padding:2px 7px;border-radius:3px;text-align:center;white-space:nowrap}
+.rtitle{font-size:12px;color:var(--color-text-primary)}
+.d1 .rtitle{font-weight:500;font-size:13px}
+.disc{font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;flex-shrink:0}
+/* discipline badges */
+.d-est{background:#E6F1FB;color:#0C447C}.d-arq{background:#FBEAF0;color:#72243E}
+.d-both{background:#EAF3DE;color:#27500A}.d-mep{background:#FAEEDA;color:#412402}
+.d-fp{background:#FCEBEB;color:#501313}.d-bms{background:#EEEDFE;color:#26215C}
+@media(prefers-color-scheme:dark){
+.d-est{background:#0C447C;color:#B5D4F4}.d-arq{background:#72243E;color:#F4C0D1}
+.d-both{background:#27500A;color:#C0DD97}.d-mep{background:#412402;color:#FAC775}
+.d-fp{background:#501313;color:#F7C1C1}.d-bms{background:#26215C;color:#CECBF6}
+}
+/* pill colors */
+.p-est{background:#E6F1FB;color:#0C447C;border:1px solid #85B7EB}
+.p-arq{background:#FBEAF0;color:#72243E;border:1px solid #ED93B1}
+.p-both{background:#EAF3DE;color:#27500A;border:1px solid #97C459}
+.p-mep{background:#FAEEDA;color:#633806;border:1px solid #EF9F27}
+.p-fp{background:#FCEBEB;color:#791F1F;border:1px solid #F09595}
+.p-bms{background:#EEEDFE;color:#3C3489;border:1px solid #AFA9EC}
+.p-est2{background:#EEEDFE;color:#3C3489;border:1px solid #AFA9EC}
+.p-arq2{background:#FAECE7;color:#712B13;border:1px solid #F0997B}
+.p-both2{background:#FAEEDA;color:#633806;border:1px solid #EF9F27}
+.p-mep2{background:#FAEEDA;color:#412402;border:1px solid #BA7517}
+.p-fp2{background:#FCEBEB;color:#501313;border:1px solid #E24B4A}
+.p-bms2{background:#EEEDFE;color:#26215C;border:1px solid #7F77DD}
+@media(prefers-color-scheme:dark){
+.p-est{background:#0C447C;color:#B5D4F4;border-color:#378ADD}
+.p-arq{background:#72243E;color:#F4C0D1;border-color:#D4537E}
+.p-both{background:#27500A;color:#C0DD97;border-color:#639922}
+.p-mep{background:#633806;color:#FAC775;border-color:#854F0B}
+.p-fp{background:#791F1F;color:#F7C1C1;border-color:#A32D2D}
+.p-bms{background:#3C3489;color:#CECBF6;border-color:#534AB7}
+.p-est2{background:#3C3489;color:#CECBF6;border-color:#7F77DD}
+.p-arq2{background:#712B13;color:#F5C4B3;border-color:#D85A30}
+.p-both2{background:#633806;color:#FAC775;border-color:#BA7517}
+.p-mep2{background:#412402;color:#FAC775;border-color:#BA7517}
+.p-fp2{background:#501313;color:#F7C1C1;border-color:#E24B4A}
+.p-bms2{background:#26215C;color:#CECBF6;border-color:#7F77DD}
+}
+.leg{display:flex;gap:8px;padding:6px 12px;border-bottom:1px solid var(--color-border-tertiary);flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+</style>
+
+<div class="w">
+<div class="tabs">
+  <div class="tab on" id="tab-all" onclick="setTab('all')">Todos</div>
+  <div class="tab" id="tab-est" onclick="setTab('est')">Estructura</div>
+  <div class="tab" id="tab-arq" onclick="setTab('arq')">Arquitectura</div>
+  <div class="tab" id="tab-mep" onclick="setTab('mep')">MEP (HVAC/PLO/ELE)</div>
+  <div class="tab" id="tab-fp"  onclick="setTab('fp')">Contra incendio</div>
+  <div class="tab" id="tab-bms" onclick="setTab('bms')">BMS / Seguridad</div>
+</div>
+
+<div class="leg">
+  <div class="li"><div class="ld" style="background:#378ADD"></div>Estructura</div>
+  <div class="li"><div class="ld" style="background:#D4537E"></div>Arquitectura</div>
+  <div class="li"><div class="ld" style="background:#639922"></div>Compartido</div>
+  <div class="li"><div class="ld" style="background:#BA7517"></div>MEP</div>
+  <div class="li"><div class="ld" style="background:#E24B4A"></div>Contra incendio</div>
+  <div class="li"><div class="ld" style="background:#7F77DD"></div>BMS / Seguridad</div>
+  <div class="li" style="margin-left:auto;font-size:10px;color:var(--color-text-tertiary)">Haz clic en cualquier fila →</div>
+</div>
+
+<div class="pr-note">Pr clasifica el <strong>producto físico adquirible</strong> — el componente individual que forma parte de un sistema Ss. En L3 el material y el PredefinedType son los discriminadores más finos.</div>
+
+<div class="builder">
+  <span class="seg-label">TABLA</span>
+  <span class="seg on" style="background:var(--color-background-secondary)">Pr</span>
+  <span class="sep">_</span>
+  <span class="seg-label">GRUPO</span>
+  <span class="seg" id="sg">XX</span>
+  <span class="sep">_</span>
+  <span class="seg-label">SUBGRUPO</span>
+  <span class="seg" id="ss">XX</span>
+  <span class="sep">_</span>
+  <span class="seg-label">SECCIÓN</span>
+  <span class="seg" id="sc">XX</span>
+  <div class="result" id="res">← Selecciona un elemento del árbol</div>
+</div>
+
+<div class="pset-panel" id="pp">
+  <span class="hint">En Pr el Material y el PredefinedType son los discriminadores más finos — más que en EF o Ss</span>
+</div>
+
+<div class="tree" id="tree"></div>
+</div>
+
+<script>
+const DB={
+  est:{badge:'d-est',label:'EST'},arq:{badge:'d-arq',label:'ARQ'},
+  both:{badge:'d-both',label:'EST+ARQ'},mep:{badge:'d-mep',label:'MEP'},
+  fp:{badge:'d-fp',label:'CI'},bms:{badge:'d-bms',label:'BMS'}
+};
+function badge(d){return `<span class="disc ${DB[d].badge}">${DB[d].label}</span>`}
+
+const DATA=[
+
+/* ── Pr_20 STRUCTURE & GENERAL ── */
+{g:'20',title:'Structure and general products',disc:'est',pill:'p-est',
+ ps:{entity:['IfcBeam','IfcColumn','IfcMember','IfcPlate','IfcPile','IfcFooting','IfcSlab'],
+     pset:['Pset_BeamCommon','Pset_ColumnCommon','Pset_MemberCommon','Pset_PlateCommon','Pset_SlabCommon'],
+     mat:['IfcMaterial.Name','IfcProfileDef.ProfileName'],
+     attrs:['LoadBearing=TRUE','PredefinedType','ProfileDef.Name','Material.Name'],
+     decision:'IfcType + Material + ProfileDef definen el producto estructural'},
+ subs:[
+  {s:'76',title:'Sectional products',disc:'est',pill:'p-est',
+   ps:{entity:['IfcBeam','IfcColumn','IfcMember'],pset:['Pset_BeamCommon','Pset_ColumnCommon','Pset_MemberCommon'],
+       mat:['IfcProfileDef.ProfileName','IfcMaterial.Name'],
+       attrs:['ProfileDef.Name = IPE/HEB/HEA/UB/UC/CHS/RHS/SHS','Material.Name = S235/S275/S355/S420'],
+       decision:'Sección metálica: ProfileDef + Material acero'},
+   secs:[
+    {sec:'51',title:'Metal sections',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBeam','IfcColumn','IfcMember'],pset:['Pset_BeamCommon','Pset_ColumnCommon'],mat:['IfcProfileDef.ProfileName','IfcMaterial.Name'],attrs:['ProfileDef = perfil abierto (IPE/HEB/HEA/UB/UC)','Material.Name = acero estructural'],decision:'Perfil abierto de acero: IPE, HEB, HEA, UB, UC'}},
+    {sec:'52',title:'Metal tubes and hollow sections',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcMember','IfcColumn'],pset:['Pset_MemberCommon'],mat:['IfcProfileDef.ProfileName'],attrs:['ProfileDef = perfil cerrado (CHS/RHS/SHS/PIPE)','Material.Name = acero'],decision:'Perfil cerrado: CHS, RHS, SHS, tubería'}},
+    {sec:'88',title:'Timber sections',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBeam','IfcMember'],pset:['Pset_BeamCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "timber/wood/madera/glulam"','ProfileDef.Name definido'],decision:'Sección de madera o madera laminada: Material madera'}},
+    {sec:'66',title:'Precast sections',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBeam','IfcSlab'],pset:['Pset_BeamCommon','Pset_SlabCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "precast/prefabricado"','ObjectType contains "precast"'],decision:'Elemento prefabricado de hormigón: Material precast + ObjectType'}},
+   ]},
+  {s:'85',title:'Support and restraint products',disc:'est',pill:'p-est',
+   ps:{entity:['IfcMember','IfcBeam','IfcDiscreteAccessory'],pset:['Pset_MemberCommon'],mat:['IfcMaterial.Name'],
+       attrs:['ObjectType define la función (beam/column/brace/truss)','LoadBearing=TRUE'],
+       decision:'Elemento estructural secundario por función y material'},
+   secs:[
+    {sec:'08',title:'Beams and joists',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBeam'],pset:['Pset_BeamCommon'],mat:['IfcProfileDef.ProfileName','IfcMaterial.Name'],attrs:['PredefinedType=BEAM','LoadBearing=TRUE','ProfileDef definido'],decision:'IfcBeam:BEAM + LoadBearing=TRUE + perfil definido'}},
+    {sec:'16',title:'Columns and column accessories',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcColumn'],pset:['Pset_ColumnCommon'],mat:['IfcProfileDef.ProfileName','IfcMaterial.Name'],attrs:['PredefinedType=COLUMN','LoadBearing=TRUE'],decision:'IfcColumn:COLUMN + LoadBearing=TRUE'}},
+    {sec:'90',title:'Trusses and lattice frames',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBeam','IfcMember'],pset:['Pset_BeamCommon','Pset_MemberCommon'],mat:[],attrs:['ObjectType contains "truss/cercha/lattice"','LoadBearing=TRUE'],decision:'ObjectType "truss" o "cercha" + LoadBearing=TRUE'}},
+    {sec:'62',title:'Piles and ancillary products',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcPile'],pset:['Pset_PileCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=PILE','LoadBearing=TRUE','Material.Name definido'],decision:'IfcPile + LoadBearing=TRUE'}},
+    {sec:'13',title:'Concrete base and foundation products',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcFooting','IfcSlab:BASESLAB'],pset:['Pset_FootingCommon','Pset_SlabCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=BASESLAB o FOOTING','Material.Name contains "concrete/hormigón"'],decision:'IfcFooting o IfcSlab:BASESLAB + Material hormigón'}},
+    {sec:'14',title:'Concrete flooring and decking products',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcSlab:FLOOR'],pset:['Pset_SlabCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=FLOOR','LoadBearing=TRUE','Material.Name contains "concrete/hormigón"'],decision:'IfcSlab:FLOOR + LoadBearing=TRUE + Material hormigón'}},
+   ]},
+  {s:'93',title:'Unit structure and general products',disc:'est',pill:'p-est',
+   ps:{entity:['IfcWall','IfcSlab'],pset:['Pset_WallCommon','Pset_SlabCommon'],mat:['IfcMaterial.Name'],
+       attrs:['Material.Name = ladrillo/bloque/mampostería/brick'],
+       decision:'Unidades de mampostería o bloques — Material define el producto'},
+   secs:[
+    {sec:'52',title:'Masonry walling units',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcWall'],pset:['Pset_WallCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "brick/ladrillo/block/mampostería"','LoadBearing=T/F'],decision:'Material mampostería en IfcWall'}},
+    {sec:'51',title:'Masonry flooring units',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcSlab'],pset:['Pset_SlabCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "masonry/stone/piedra"','PredefinedType=FLOOR'],decision:'Material piedra/mampostería en losa'}},
+    {sec:'96',title:'Walling units',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcWall'],pset:['Pset_WallCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "block/bloque/concrete block"'],decision:'Bloques de hormigón o bloque de construcción'}},
+   ]},
+  {s:'29',title:'Fastener products',disc:'est',pill:'p-est',
+   ps:{entity:['IfcDiscreteAccessory','IfcFastener'],pset:['Pset_FastenerCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType=BOLT/SCREW/NAIL/ANCHOR','ObjectType define el tipo de fijación'],
+       decision:'IfcFastener o IfcDiscreteAccessory + PredefinedType'},
+   secs:[
+    {sec:'08',title:'Bolts and accessories',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcFastener'],pset:['Pset_FastenerCommon'],mat:[],attrs:['PredefinedType=BOLT o USERDEFINED','ObjectType contains "bolt/tornillo"'],decision:'PredefinedType=BOLT'}},
+    {sec:'76',title:'Screws',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcFastener'],pset:['Pset_FastenerCommon'],mat:[],attrs:['PredefinedType=SCREW','ObjectType contains "screw/tornillo autorroscante"'],decision:'PredefinedType=SCREW'}},
+    {sec:'03',title:'Anchors and components',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcFastener'],pset:['Pset_FastenerCommon'],mat:[],attrs:['PredefinedType=ANCHOR o USERDEFINED','ObjectType contains "anchor/anclaje"'],decision:'ObjectType "anchor" o "anclaje"'}},
+   ]},
+  {s:'31',title:'Formless structure and general products',disc:'est',pill:'p-est',
+   ps:{entity:['IfcBuildingElementProxy'],pset:[],mat:['IfcMaterial.Name'],
+       attrs:['Material.Name contains "concrete/hormigón/grout/mortar"','ObjectType define el producto formless'],
+       decision:'Productos sin forma definida: Material + ObjectType'},
+   secs:[
+    {sec:'16',title:'Concretes',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBuildingElementProxy'],pset:[],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "concrete/C25/C30/C35"'],decision:'Material hormigón con clase de resistencia'}},
+    {sec:'53',title:'Mortars and grouts',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcBuildingElementProxy'],pset:[],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "mortar/grout/mortero/lechada"'],decision:'Material mortero o lechada'}},
+    {sec:'71',title:'Reinforcement and ancillaries',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcReinforcingBar','IfcReinforcingMesh'],pset:['Pset_ReinforcingBarCommon'],mat:['IfcMaterial.Name'],attrs:['IfcReinforcingBar o IfcReinforcingMesh','Material.Name = B500/rebar'],decision:'IfcReinforcingBar o IfcReinforcingMesh'}},
+   ]},
+ ]},
+
+/* ── Pr_25 SKIN PRODUCTS ── */
+{g:'25',title:'Skin products',disc:'both',pill:'p-both',
+ ps:{entity:['IfcWall','IfcCurtainWall','IfcCovering','IfcRailing'],
+     pset:['Pset_WallCommon','Pset_CoveringCommon','Pset_CurtainWallCommon'],
+     mat:['IfcMaterial.Name','IfcMaterialLayerSet'],
+     attrs:['IsExternal=T/F','LoadBearing=T/F','PredefinedType','Material.Name'],
+     decision:'Productos de envolvente: IsExternal + Material + PredefinedType'},
+ subs:[
+  {s:'71',title:'Rigid board, panel and sheet products',disc:'both',pill:'p-both',
+   ps:{entity:['IfcCovering','IfcWall'],pset:['Pset_CoveringCommon','Pset_WallCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType=CLADDING o INSULATION','Material.Name define el producto'],
+       decision:'Material del panel/tablero define la sección'},
+   secs:[
+    {sec:'14',title:'Cladding and lining panels',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=CLADDING','IsExternal=TRUE','Material.Name = metal/composite/GRC'],decision:'CLADDING + IsExternal=TRUE + Material panel'}},
+    {sec:'35',title:'Gypsum boards and sheets',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=INSULATION o CLADDING','Material.Name contains "gypsum/yeso/plasterboard"'],decision:'Material yeso/cartón yeso'}},
+    {sec:'70',title:'Rigid insulation boards and panels',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=INSULATION','Material.Name contains "PIR/PUR/EPS/XPS/rockwool"'],decision:'Material aislante rígido: PIR, PUR, EPS, XPS'}},
+    {sec:'50',title:'Metal panels',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering','IfcPlate'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=CLADDING','Material.Name contains "steel/aluminium/acero/aluminio"'],decision:'Panel metálico de cerramiento: Material acero o aluminio'}},
+    {sec:'33',title:'Glass and glazing sheets',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering','IfcWindow'],pset:['Pset_WindowCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "glass/vidrio/glazing"'],decision:'Material vidrio en cerramiento o ventana'}},
+   ]},
+  {s:'57',title:'Non-rigid sheet and membrane products',disc:'both',pill:'p-both',
+   ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType=ROOFING o MEMBRANE','Material.Name define el tipo de membrana'],
+       decision:'Membrana o lámina flexible: Material define el producto'},
+   secs:[
+    {sec:'08',title:'Bitumen-based membranes',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=ROOFING o MEMBRANE','Material.Name contains "bitumen/asphalt/lámina"'],decision:'Material bituminoso en cubierta o impermeabilización'}},
+    {sec:'65',title:'Plastics membranes',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "EPDM/PVC/TPO/geomembrana"'],decision:'Membrana plástica: EPDM, PVC, TPO'}},
+    {sec:'06',title:'Batt and quilt insulation products',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=INSULATION','Material.Name contains "rockwool/glasswool/mineral wool"'],decision:'Aislante en manta: lana de roca o lana de vidrio'}},
+    {sec:'21',title:'Damp-proof courses and cavity trays',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['ObjectType contains "DPC/damp-proof/barrera vapor"'],decision:'Barrera de vapor o DPC: ObjectType "DPC"'}},
+   ]},
+  {s:'80',title:'Smoke and fire control products',disc:'fp',pill:'p-fp',
+   ps:{entity:['IfcCovering','IfcBuildingElementProxy'],pset:[],mat:['IfcMaterial.Name'],
+       attrs:['ObjectType contains "fire barrier/smoke stop/cortafuego"','FireRating definido'],
+       decision:'Producto de control de humo o fuego: ObjectType + FireRating'},
+   secs:[
+    {sec:'79',title:'Smoke and fire barriers',disc:'fp',pill:'p-fp2',
+     ps:{entity:['IfcBuildingElementProxy'],pset:[],mat:[],attrs:['ObjectType contains "fire barrier/cortafuego"','FireRating definido'],decision:'ObjectType "fire barrier" + FireRating'}},
+    {sec:'81',title:'Smoke and fire-stopping',disc:'fp',pill:'p-fp2',
+     ps:{entity:['IfcBuildingElementProxy'],pset:[],mat:[],attrs:['ObjectType contains "firestop/fire stopping/pasatubos ignífugo"'],decision:'ObjectType "firestop"'}},
+   ]},
+  {s:'93',title:'Unit skin products',disc:'arq',pill:'p-arq',
+   ps:{entity:['IfcCovering','IfcWall'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],
+       attrs:['Material.Name = teja/tile/ladrillo visto/adoquín','PredefinedType=ROOFING o CLADDING'],
+       decision:'Unidad de revestimiento: Material + PredefinedType'},
+   secs:[
+    {sec:'72',title:'Roofing and cladding units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=ROOFING','Material.Name contains "tile/teja/slate/pizarra"'],decision:'Teja o pizarra: PredefinedType=ROOFING + Material'}},
+    {sec:'60',title:'Paving units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcPavement'],pset:['Pset_PavementCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "granite/adoquín/concrete paver"'],decision:'Adoquín o baldosa: Material define el producto'}},
+    {sec:'52',title:'Masonry openings units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcWall'],pset:['Pset_WallCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "brick/ladrillo"','ObjectType contains "opening/hueco"'],decision:'Unidades de fábrica en huecos'}},
+   ]},
+ ]},
+
+/* ── Pr_30 OPENING PRODUCTS ── */
+{g:'30',title:'Opening products',disc:'arq',pill:'p-arq',
+ ps:{entity:['IfcDoor','IfcWindow','IfcShadingDevice'],
+     pset:['Pset_DoorCommon','Pset_WindowCommon'],
+     mat:['IfcMaterial.Name'],
+     attrs:['IsExternal=T/F','PredefinedType','FireRating','ThermalTransmittance','Material.Name'],
+     decision:'IfcDoor o IfcWindow + PredefinedType + Material definen el producto'},
+ subs:[
+  {s:'59',title:'Openings and opening component products',disc:'arq',pill:'p-arq',
+   ps:{entity:['IfcDoor','IfcWindow'],pset:['Pset_DoorCommon','Pset_WindowCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType','IsExternal=T/F','Material.Name = aluminio/madera/PVC/acero'],
+       decision:'PredefinedType + Material del marco definen el producto'},
+   secs:[
+    {sec:'24',title:'Doorsets',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcDoor'],pset:['Pset_DoorCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=DOOR','IsExternal=T/F','FireRating si aplica','Material.Name = madera/acero/aluminio'],decision:'IfcDoor + PredefinedType=DOOR + Material + FireRating'}},
+    {sec:'98',title:'Window units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcWindow'],pset:['Pset_WindowCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=WINDOW','IsExternal=T/F','ThermalTransmittance','Material.Name = PVC/aluminio/madera'],decision:'IfcWindow + Material + ThermalTransmittance'}},
+    {sec:'33',title:'Gate surrounds and leaves',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcDoor'],pset:['Pset_DoorCommon'],mat:[],attrs:['PredefinedType=GATE','ObjectType contains "gate/cancela"'],decision:'PredefinedType=GATE'}},
+    {sec:'36',title:'Hatches and access panels',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcDoor'],pset:['Pset_DoorCommon'],mat:[],attrs:['PredefinedType=TRAPDOOR','ObjectType contains "hatch/trampilla/access panel"'],decision:'PredefinedType=TRAPDOOR o ObjectType "hatch"'}},
+    {sec:'48',title:'Louvres and components',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcShadingDevice'],pset:['Pset_ShadingDeviceCommon'],mat:[],attrs:['PredefinedType=LOUVRE','ObjectType contains "louvre/lama"'],decision:'IfcShadingDevice:LOUVRE'}},
+    {sec:'72',title:'Rooflights',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcWindow'],pset:['Pset_WindowCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=SKYLIGHT','IsExternal=TRUE','ObjectType contains "rooflight/lucernario"'],decision:'IfcWindow:SKYLIGHT + IsExternal=TRUE'}},
+   ]},
+  {s:'36',title:'Hardware products',disc:'arq',pill:'p-arq',
+   ps:{entity:['IfcDiscreteAccessory'],pset:[],mat:[],
+       attrs:['ObjectType define el tipo de herraje (hinge/lock/handle)'],
+       decision:'Herraje de puerta o ventana: ObjectType'},
+   secs:[
+    {sec:'08',title:'Bolting, latching and locking hardware',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcDiscreteAccessory'],pset:[],mat:[],attrs:['ObjectType contains "lock/latch/cerradura/pestillo"'],decision:'ObjectType "lock" o "cerradura"'}},
+    {sec:'36',title:'Hinges and hanging hardware',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcDiscreteAccessory'],pset:[],mat:[],attrs:['ObjectType contains "hinge/bisagra"'],decision:'ObjectType "hinge" o "bisagra"'}},
+   ]},
+ ]},
+
+/* ── Pr_35 COVERING & FINISHING ── */
+{g:'35',title:'Covering and finishing products',disc:'arq',pill:'p-arq',
+ ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],
+     attrs:['PredefinedType=CEILING/FLOORING/ROOFING/CLADDING','Material.Name define el acabado'],
+     decision:'PredefinedType + Material del acabado definen el producto'},
+ subs:[
+  {s:'93',title:'Unit covering and finish products',disc:'arq',pill:'p-arq',
+   ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType=FLOORING o CEILING','Material.Name = cerámica/porcelana/madera/piedra'],
+       decision:'Unidad de acabado: Material + PredefinedType'},
+   secs:[
+    {sec:'96',title:'Wall and floor tile units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=FLOORING o CLADDING','Material.Name contains "ceramic/tile/porcelain/cerámica"'],decision:'Material cerámica o porcelana'}},
+    {sec:'97',title:'Wood block units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=FLOORING','Material.Name contains "wood/timber/parquet/madera"'],decision:'Material parquet o tarima de madera'}},
+    {sec:'13',title:'Ceiling infill units',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=CEILING','Material.Name contains "mineral fibre/fibra mineral/panel techo"'],decision:'Panel de techo registrable: Material fibra mineral'}},
+   ]},
+  {s:'57',title:'Non-rigid sheet covering products',disc:'arq',pill:'p-arq',
+   ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType=FLOORING','Material.Name = moqueta/vinilo/linóleo/caucho'],
+       decision:'Pavimento flexible: Material define el producto'},
+   secs:[
+    {sec:'11',title:'Carpets and carpet tiles',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=FLOORING','Material.Name contains "carpet/moqueta"'],decision:'Material moqueta'}},
+    {sec:'71',title:'Resilient floor coverings',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=FLOORING','Material.Name contains "vinyl/PVC/linoleum/rubber/vinilo"'],decision:'Pavimento vinílico, PVC o linóleo'}},
+   ]},
+  {s:'31',title:'Formless covering and finish products',disc:'arq',pill:'p-arq',
+   ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],
+       attrs:['Material.Name = pintura/enlucido/yeso/revestimiento líquido'],
+       decision:'Acabado aplicado en obra: Material define el producto'},
+   secs:[
+    {sec:'64',title:'Plasters and renders',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "plaster/render/enlucido/mortero de yeso"'],decision:'Material enlucido o revoco'}},
+    {sec:'22',title:'Decorative coatings',disc:'arq',pill:'p-arq2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "paint/pintura/coating"'],decision:'Material pintura o recubrimiento decorativo'}},
+    {sec:'68',title:'Protective coatings',disc:'both',pill:'p-both2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['Material.Name contains "intumescent/galvaniz/epoxi/antioxidante"'],decision:'Recubrimiento protector: intumescente, galvanizado, epoxi'}},
+   ]},
+ ]},
+
+/* ── Pr_60 SERVICES SOURCE PRODUCTS ── */
+{g:'60',title:'Services and process source products',disc:'mep',pill:'p-mep',
+ ps:{entity:['IfcEnergyConversionDevice','IfcTank','IfcBoiler','IfcChiller','IfcUnitaryEquipment','IfcAirHandlerUnit'],
+     pset:['Pset_BoilerCommon','Pset_ChillerCommon','Pset_UnitaryEquipmentCommon'],
+     mat:[],
+     attrs:['PredefinedType del equipo','IfcDistributionSystem.PredefinedType'],
+     decision:'Equipo fuente de servicio: PredefinedType del equipo + sistema al que pertenece'},
+ subs:[
+  {s:'60',title:'Heating and cooling source products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcBoiler','IfcChiller','IfcHeatExchanger','IfcUnitaryEquipment'],pset:['Pset_BoilerCommon','Pset_ChillerCommon'],mat:[],
+       attrs:['PredefinedType=BOILER / CHILLER / HEATPUMP','IfcDistributionSystem=HEATING o REFRIGERATION'],
+       decision:'Equipo de generación de calor o frío: PredefinedType'},
+   secs:[
+    {sec:'08',title:'Boilers',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcBoiler'],pset:['Pset_BoilerCommon'],mat:[],attrs:['PredefinedType=BOILER','Sistema HEATING'],decision:'IfcBoiler + PredefinedType=BOILER'}},
+    {sec:'13',title:'Chillers and cooling towers',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcChiller'],pset:['Pset_ChillerCommon'],mat:[],attrs:['PredefinedType=AIRCOOLED o WATERCOOLED','Sistema REFRIGERATION'],decision:'IfcChiller + PredefinedType AIRCOOLED/WATERCOOLED'}},
+    {sec:'96',title:'Water heaters',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcUnitaryEquipment'],pset:['Pset_UnitaryEquipmentCommon'],mat:[],attrs:['PredefinedType=USERDEFINED','ObjectType contains "water heater/calentador"'],decision:'ObjectType "water heater"'}},
+   ]},
+  {s:'65',title:'Air and fume source products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcAirHandlerUnit','IfcUnitaryEquipment'],pset:['Pset_UnitaryEquipmentCommon'],mat:[],
+       attrs:['PredefinedType=AIRHANDLER o SPLITSYSTEM','Sistema VENTILATION o AIRCONDITIONING'],
+       decision:'Equipo fuente de aire: PredefinedType del equipo'},
+   secs:[
+    {sec:'03',title:'Air-handling units',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcUnitaryEquipment'],pset:['Pset_UnitaryEquipmentCommon'],mat:[],attrs:['PredefinedType=AIRHANDLER','Sistema AIRCONDITIONING'],decision:'IfcUnitaryEquipment:AIRHANDLER'}},
+    {sec:'37',title:'Heating and cooling coils',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcCoil'],pset:['Pset_CoilCommon'],mat:[],attrs:['PredefinedType=HEATINGCOIL o COOLINGCOIL'],decision:'IfcCoil:HEATINGCOIL o COOLINGCOIL'}},
+   ]},
+  {s:'50',title:'Tank, cylinder and vessel products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcTank'],pset:['Pset_TankCommon'],mat:[],
+       attrs:['PredefinedType=STORAGE o EXPANSION o PRESSUREVESSEL','ObjectType describe el fluido'],
+       decision:'IfcTank + PredefinedType define el tipo de depósito'},
+   secs:[
+    {sec:'10',title:'Bulk storage tanks',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcTank'],pset:['Pset_TankCommon'],mat:[],attrs:['PredefinedType=STORAGE','ObjectType contains "bulk/almacenamiento"'],decision:'IfcTank:STORAGE + ObjectType "bulk"'}},
+    {sec:'96',title:'Water storage products',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcTank'],pset:['Pset_TankCommon'],mat:[],attrs:['PredefinedType=STORAGE','ObjectType contains "water/agua/cisterna"'],decision:'IfcTank:STORAGE + ObjectType "water"'}},
+    {sec:'20',title:'Cylinders and buffer vessels',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcTank'],pset:['Pset_TankCommon'],mat:[],attrs:['PredefinedType=EXPANSION o PRESSUREVESSEL'],decision:'IfcTank:EXPANSION o PRESSUREVESSEL'}},
+   ]},
+  {s:'70',title:'Power supply products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcElectricDistributionBoard','IfcTransformer','IfcGenerator'],pset:['Pset_ElectricDistributionBoardCommon'],mat:[],
+       attrs:['PredefinedType del equipo eléctrico','Sistema ELECTRICAL o POWERGENERATION'],
+       decision:'Equipo fuente eléctrica: PredefinedType del equipo'},
+   secs:[
+    {sec:'22',title:'Distribution boxes and switchboards',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcElectricDistributionBoard'],pset:['Pset_ElectricDistributionBoardCommon'],mat:[],attrs:['PredefinedType=SWITCHBOARD o DISTRIBUTIONBOARD'],decision:'IfcElectricDistributionBoard:SWITCHBOARD o DISTRIBUTIONBOARD'}},
+    {sec:'48',title:'Low-voltage switchgear',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcElectricDistributionBoard'],pset:['Pset_ElectricDistributionBoardCommon'],mat:[],attrs:['PredefinedType=SWITCHBOARD','NominalVoltage ≤ 1000 V'],decision:'SWITCHBOARD + NominalVoltage ≤ 1000 V'}},
+    {sec:'65',title:'Power generators and CHP units',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcEnergyConversionDevice'],pset:[],mat:[],attrs:['PredefinedType=POWERGENERATION','ObjectType contains "generator/CHP/grupo electrógeno"'],decision:'ObjectType "generator" o "CHP"'}},
+   ]},
+ ]},
+
+/* ── Pr_65 SERVICES DISTRIBUTION ── */
+{g:'65',title:'Services and process distribution products',disc:'mep',pill:'p-mep',
+ ps:{entity:['IfcPipeSegment','IfcDuctSegment','IfcCableSegment','IfcCableCarrierSegment','IfcPump','IfcValve','IfcFan'],
+     pset:['Pset_PipeSegmentCommon','Pset_DuctSegmentCommon','Pset_CableSegmentCommon','Pset_PumpCommon','Pset_ValveCommon','Pset_FanCommon'],
+     mat:['IfcMaterial.Name'],
+     attrs:['IfcDistributionSystem.PredefinedType','PredefinedType del elemento','NominalDiameter / NominalWidth'],
+     decision:'Entidad de distribución + Sistema + dimensión principal'},
+ subs:[
+  {s:'52',title:'Pipe, tube and fitting products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcPipeSegment','IfcPipeFitting'],pset:['Pset_PipeSegmentCommon','Pset_PipeFittingCommon'],mat:['IfcMaterial.Name'],
+       attrs:['PredefinedType sistema = HEATING / DOMESTICCOLDWATER / DRAINAGE…','Pset_PipeSegmentCommon.NominalDiameter','Material.Name = copper/steel/PPR/PE/PVC'],
+       decision:'Sistema + diámetro + Material definen el producto de tubería'},
+   secs:[
+    {sec:'03',title:'Above-ground drainage pipes and fittings',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcPipeSegment'],pset:['Pset_PipeSegmentCommon'],mat:['IfcMaterial.Name'],attrs:['Sistema=DRAINAGE','Elevation ≥ 0','Material.Name contains "PVC/PP/cast iron"'],decision:'DRAINAGE + Elevation ≥ 0 + Material PVC/PP'}},
+    {sec:'07',title:'Below-ground drainage pipes and fittings',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcPipeSegment'],pset:['Pset_PipeSegmentCommon'],mat:['IfcMaterial.Name'],attrs:['Sistema=DRAINAGE','Elevation < 0','Material.Name contains "PVC/vitrified clay/HDPE"'],decision:'DRAINAGE + Elevation < 0 + Material PVC o grès'}},
+    {sec:'63',title:'Pipes and fittings (general supply)',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcPipeSegment'],pset:['Pset_PipeSegmentCommon'],mat:['IfcMaterial.Name'],attrs:['Sistema = DOMESTICCOLDWATER / DOMESTICHOTWATER / HEATING / GAS','NominalDiameter','Material.Name = copper/PPR/PE-X/steel'],decision:'Sistema suministro + NominalDiameter + Material'}},
+   ]},
+  {s:'54',title:'Valve products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcValve'],pset:['Pset_ValveCommon'],mat:[],
+       attrs:['PredefinedType=ISOLATING / CONTROL / CHECKVALVE / PRESSUREREG','ObjectType o sistema define la aplicación'],
+       decision:'IfcValve + PredefinedType define el tipo de válvula'},
+   secs:[
+    {sec:'94',title:'Water supply and wastewater valves',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcValve'],pset:['Pset_ValveCommon'],mat:[],attrs:['PredefinedType=ISOLATING o CONTROL','Sistema = DOMESTICCOLDWATER / WASTEWATER'],decision:'ISOLATING o CONTROL en sistema de agua'}},
+    {sec:'33',title:'Gas and liquid fuel valves',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcValve'],pset:['Pset_ValveCommon'],mat:[],attrs:['PredefinedType=ISOLATING','Sistema=GAS'],decision:'ISOLATING en sistema GAS'}},
+    {sec:'30',title:'Firefighting valves and devices',disc:'fp',pill:'p-fp2',
+     ps:{entity:['IfcValve'],pset:['Pset_ValveCommon'],mat:[],attrs:['Sistema=FIREPROTECTION','PredefinedType=ISOLATING o CONTROL'],decision:'Válvula en sistema FIREPROTECTION'}},
+   ]},
+  {s:'53',title:'Pump products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcPump'],pset:['Pset_PumpCommon'],mat:[],
+       attrs:['PredefinedType=CIRCULATOR / SUBMERSIBLE / SUMP / VACUUM','Sistema al que pertenece'],
+       decision:'IfcPump + PredefinedType define el tipo de bomba'},
+   secs:[
+    {sec:'86',title:'Supply and exhaust pumps',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcPump'],pset:['Pset_PumpCommon'],mat:[],attrs:['PredefinedType=CIRCULATOR','Sistema=HEATING o DOMESTICHOTWATER'],decision:'IfcPump:CIRCULATOR en sistema de calefacción o ACS'}},
+    {sec:'24',title:'Drainage pumps',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcPump'],pset:['Pset_PumpCommon'],mat:[],attrs:['PredefinedType=SUBMERSIBLE o SUMP','Sistema=DRAINAGE'],decision:'IfcPump:SUBMERSIBLE en sistema DRAINAGE'}},
+   ]},
+  {s:'65',title:'Ductwork products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcDuctSegment','IfcDuctFitting'],pset:['Pset_DuctSegmentCommon','Pset_DuctFittingCommon'],mat:['IfcMaterial.Name'],
+       attrs:['Sistema=VENTILATION o AIRCONDITIONING','Pset_DuctSegmentCommon.NominalWidth / NominalHeight','Material.Name = galvanised steel/aluminium'],
+       decision:'Sistema VENTILATION/AIRCONDITIONING + sección de conducto + Material'},
+   secs:[
+    {sec:'25',title:'Ductwork and fittings',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcDuctSegment'],pset:['Pset_DuctSegmentCommon'],mat:['IfcMaterial.Name'],attrs:['Sistema=VENTILATION o AIRCONDITIONING','NominalWidth + NominalHeight','Material = chapa galvanizada/aluminio'],decision:'Conducto: Sistema + sección + Material galvanizado'}},
+    {sec:'24',title:'Duct dampers',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcDamper'],pset:['Pset_DamperCommon'],mat:[],attrs:['PredefinedType=CONTROLDAMPER o SMOKEDAMPER','DamperOperation=SMOKECONTROL o CONTROL'],decision:'IfcDamper + PredefinedType'}},
+    {sec:'23',title:'Ductwork accessories',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcDuctFitting'],pset:['Pset_DuctFittingCommon'],mat:[],attrs:['PredefinedType=BEND / TEE / TRANSITION / JUNCTION'],decision:'IfcDuctFitting + PredefinedType'}},
+   ]},
+  {s:'70',title:'Cables, conductors and fittings',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcCableSegment','IfcCableCarrierSegment'],pset:['Pset_CableSegmentCommon','Pset_CableCarrierSegmentCommon'],mat:[],
+       attrs:['Sistema=ELECTRICAL o LIGHTING','NominalVoltage','PredefinedType del cable o bandeja'],
+       decision:'Sistema eléctrico + NominalVoltage + PredefinedType del cable'},
+   secs:[
+    {sec:'48',title:'Low-voltage cables',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcCableSegment'],pset:['Pset_CableSegmentCommon'],mat:[],attrs:['PredefinedType=CABLE','NominalVoltage ≤ 1000 V','Sistema=ELECTRICAL'],decision:'Cable: NominalVoltage ≤ 1000 V'}},
+    {sec:'36',title:'High-voltage cables',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcCableSegment'],pset:['Pset_CableSegmentCommon'],mat:[],attrs:['PredefinedType=CABLE','NominalVoltage > 1000 V'],decision:'Cable: NominalVoltage > 1000 V'}},
+    {sec:'11',title:'Cable management and accessories',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcCableCarrierSegment'],pset:['Pset_CableCarrierSegmentCommon'],mat:[],attrs:['PredefinedType=CABLELADDER o CABLETRAY o CONDUITSEGMENT'],decision:'IfcCableCarrierSegment + PredefinedType bandeja/conduit'}},
+    {sec:'15',title:'Communications cables and accessories',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcCableSegment'],pset:['Pset_CableSegmentCommon'],mat:[],attrs:['PredefinedType=CABLE','Sistema=COMMUNICATION','ObjectType contains "data/telecom/UTP/fibra"'],decision:'Cable de datos: Sistema COMMUNICATION + ObjectType "data"'}},
+   ]},
+ ]},
+
+/* ── Pr_70 SERVICES OUTLET PRODUCTS ── */
+{g:'70',title:'Services and process outlet products',disc:'mep',pill:'p-mep',
+ ps:{entity:['IfcFlowTerminal','IfcSpaceHeater','IfcAirTerminal','IfcLightFixture','IfcWasteTerminal','IfcSanitaryTerminal'],
+     pset:['Pset_SpaceHeaterCommon','Pset_AirTerminalCommon','Pset_LightFixtureCommon','Pset_SanitaryTerminalCommon'],
+     mat:[],
+     attrs:['PredefinedType del terminal','IfcDistributionSystem.PredefinedType'],
+     decision:'Terminal de salida: PredefinedType del terminal + sistema al que pertenece'},
+ subs:[
+  {s:'60',title:'Space heating and cooling products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcSpaceHeater','IfcUnitaryEquipment'],pset:['Pset_SpaceHeaterCommon','Pset_UnitaryEquipmentCommon'],mat:[],
+       attrs:['PredefinedType=RADIATOR / CONVECTOR / SPLITUNIT / FANCOILUNIT','Sistema=HEATING o AIRCONDITIONING'],
+       decision:'Terminal de calefacción/climatización: PredefinedType'},
+   secs:[
+    {sec:'36',title:'Heat emitters',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcSpaceHeater'],pset:['Pset_SpaceHeaterCommon'],mat:[],attrs:['PredefinedType=RADIATOR o CONVECTOR','HeatTransferMedium=WATER'],decision:'IfcSpaceHeater:RADIATOR o CONVECTOR + HeatTransferMedium=WATER'}},
+    {sec:'03',title:'Air conditioning units (local)',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcUnitaryEquipment'],pset:['Pset_UnitaryEquipmentCommon'],mat:[],attrs:['PredefinedType=SPLITSYSTEM o FANCOILUNIT','Sistema=AIRCONDITIONING'],decision:'SPLITSYSTEM o FANCOILUNIT + sistema AIRCONDITIONING'}},
+   ]},
+  {s:'65',title:'Air and fume outlet products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcAirTerminal'],pset:['Pset_AirTerminalCommon'],mat:[],
+       attrs:['PredefinedType=DIFFUSER / GRILLE / REGISTER','AirTerminalAirflowType=SUPPLYAIR o EXHAUSTAIR'],
+       decision:'IfcAirTerminal: PredefinedType + AirflowType'},
+   secs:[
+    {sec:'04',title:'Air terminals and diffusers',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcAirTerminal'],pset:['Pset_AirTerminalCommon'],mat:[],attrs:['PredefinedType=DIFFUSER o GRILLE','AirTerminalAirflowType=SUPPLYAIR o EXHAUSTAIR'],decision:'DIFFUSER o GRILLE + AirflowType'}},
+    {sec:'30',title:'Flues and chimneys',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcChimney','IfcDuctSegment'],pset:['Pset_ChimneyCommon'],mat:[],attrs:['IfcChimney o IfcDuctSegment:EXHAUST','ObjectType contains "flue/chimney/chimenea"'],decision:'IfcChimney o conducto de expulsión: ObjectType "flue"'}},
+   ]},
+  {s:'70',title:'Power and lighting outlet products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcLightFixture','IfcOutlet','IfcElectricAppliance'],pset:['Pset_LightFixtureCommon','Pset_OutletCommon'],mat:[],
+       attrs:['PredefinedType=POINTSOURCE / SECURITYLIGHTING / EMERGENCYLIGHTING','IsExternal=T/F'],
+       decision:'IfcLightFixture o IfcOutlet: PredefinedType + IsExternal'},
+   secs:[
+    {sec:'48',title:'Luminaires, lighting track and accessories',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcLightFixture'],pset:['Pset_LightFixtureCommon'],mat:[],attrs:['PredefinedType=POINTSOURCE o DIRECTIONAL','IsExternal=FALSE','LightFixtureMountingType=CEILING o WALL o SUSPENDED'],decision:'LightFixture: PredefinedType + MountingType + IsExternal=FALSE'}},
+    {sec:'46',title:'Lamps',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcLightFixture'],pset:['Pset_LightFixtureCommon'],mat:[],attrs:['ObjectType contains "lamp/luminaria/LED/fluorescent"'],decision:'ObjectType "lamp" o "LED"'}},
+    {sec:'47',title:'Lighting controls and distribution',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcController','IfcOutlet'],pset:['Pset_ControllerCommon','Pset_OutletCommon'],mat:[],attrs:['PredefinedType=TWOWAY o MULTIWAY','ObjectType contains "switch/dimmer/interruptor"'],decision:'IfcController de iluminación: ObjectType "switch" o "dimmer"'}},
+   ]},
+  {s:'55',title:'Liquid and gas outlet products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcSanitaryTerminal','IfcWasteTerminal','IfcFireSuppressionTerminal'],pset:['Pset_SanitaryTerminalCommon','Pset_WasteTerminalTypeCommon','Pset_FireSuppressionTerminalCommon'],mat:[],
+       attrs:['PredefinedType del terminal define el producto','Sistema al que pertenece'],
+       decision:'Terminal de salida de líquido/gas: PredefinedType'},
+   secs:[
+    {sec:'97',title:'Water fire-extinguishing outlets',disc:'fp',pill:'p-fp2',
+     ps:{entity:['IfcFireSuppressionTerminal'],pset:['Pset_FireSuppressionTerminalCommon'],mat:[],attrs:['PredefinedType=SPRINKLER o DELUGE o HOSECONNECTION'],decision:'IfcFireSuppressionTerminal: PredefinedType SPRINKLER/DELUGE'}},
+    {sec:'96',title:'Wastewater outlets and plugs',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcWasteTerminal'],pset:['Pset_WasteTerminalTypeCommon'],mat:[],attrs:['PredefinedType=FLOORTRAP o SINK o ROOFDRAIN','Sistema=WASTEWATER o DRAINAGE'],decision:'IfcWasteTerminal: PredefinedType FLOORTRAP/SINK'}},
+    {sec:'98',title:'Water inlets and outlets',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcSanitaryTerminal'],pset:['Pset_SanitaryTerminalCommon'],mat:[],attrs:['PredefinedType=TAP o SHOWER o BATH','Sistema=DOMESTICCOLDWATER o DOMESTICHOTWATER'],decision:'IfcSanitaryTerminal: PredefinedType + sistema agua'}},
+   ]},
+ ]},
+
+/* ── Pr_75 SERVICES CONTROL PRODUCTS ── */
+{g:'75',title:'Services and process control products',disc:'bms',pill:'p-bms',
+ ps:{entity:['IfcController','IfcSensor','IfcActuator','IfcAlarm'],
+     pset:['Pset_ControllerCommon','Pset_SensorCommon','Pset_ActuatorCommon','Pset_AlarmCommon'],
+     mat:[],
+     attrs:['PredefinedType del controlador/sensor','Sistema al que pertenece'],
+     decision:'Equipo de control: PredefinedType + sistema define el producto'},
+ subs:[
+  {s:'50',title:'Mechanical and electrical services control products',disc:'bms',pill:'p-bms',
+   ps:{entity:['IfcController','IfcActuator','IfcSensor'],pset:['Pset_ControllerCommon','Pset_ActuatorCommon','Pset_SensorCommon'],mat:[],
+       attrs:['PredefinedType=FLOATING / PROGRAMMABLE / MULTIPOSITION','Sistema=CONTROL'],
+       decision:'IfcController + PredefinedType + sistema CONTROL'},
+   secs:[
+    {sec:'09',title:'Building automation and intelligence products',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcController'],pset:['Pset_ControllerCommon'],mat:[],attrs:['PredefinedType=PROGRAMMABLE','Sistema=CONTROL','ObjectType contains "BMS/DDC/building automation"'],decision:'IfcController:PROGRAMMABLE + ObjectType "BMS"'}},
+    {sec:'76',title:'Sensors and detectors',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcSensor'],pset:['Pset_SensorCommon'],mat:[],attrs:['SensorType=TEMPERATURESENSOR / SMOKESENSOR / GASSENSOR / OCCUPANCYSENSOR…'],decision:'IfcSensor + SensorType define el producto'}},
+    {sec:'02',title:'Actuators',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcActuator'],pset:['Pset_ActuatorCommon'],mat:[],attrs:['PredefinedType=ELECTRICACTUATOR o PNEUMATICACTUATOR','ObjectType define aplicación'],decision:'IfcActuator + PredefinedType'}},
+   ]},
+  {s:'80',title:'Protection and security control products',disc:'bms',pill:'p-bms',
+   ps:{entity:['IfcAlarm','IfcSensor','IfcController'],pset:['Pset_AlarmCommon','Pset_SensorCommon'],mat:[],
+       attrs:['PredefinedType del dispositivo de seguridad','AlarmType / SensorType'],
+       decision:'Dispositivo de seguridad o alarma: PredefinedType + AlarmType'},
+   secs:[
+    {sec:'30',title:'Fire detection and alarm devices',disc:'fp',pill:'p-fp2',
+     ps:{entity:['IfcAlarm','IfcSensor'],pset:['Pset_AlarmCommon','Pset_SensorCommon'],mat:[],attrs:['AlarmType=FIRE','SensorType=SMOKESENSOR o HEATSENSOR','Sistema=MONITORINGSYSTEM'],decision:'AlarmType=FIRE o SensorType=SMOKESENSOR/HEATSENSOR'}},
+    {sec:'42',title:'Intrusion and hold-up alarm devices',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcAlarm'],pset:['Pset_AlarmCommon'],mat:[],attrs:['AlarmType=BURGLAR','Sistema=SECURITY'],decision:'AlarmType=BURGLAR + sistema SECURITY'}},
+    {sec:'50',title:'Monitoring system control products',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcController'],pset:['Pset_ControllerCommon'],mat:[],attrs:['Sistema=SECURITY o MONITORINGSYSTEM','ObjectType contains "CCTV/monitoring"'],decision:'Sistema SECURITY + ObjectType "CCTV"'}},
+   ]},
+  {s:'70',title:'Power and lighting control products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcController','IfcOutlet'],pset:['Pset_ControllerCommon','Pset_OutletCommon'],mat:[],
+       attrs:['PredefinedType=TWOWAY / MULTIWAY','Sistema=ELECTRICAL o LIGHTING'],
+       decision:'Control de encendido/apagado: PredefinedType + sistema'},
+   secs:[
+    {sec:'47',title:'Lift control products',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcController'],pset:['Pset_ControllerCommon'],mat:[],attrs:['ObjectType contains "lift/elevator/control ascensor"'],decision:'ObjectType "lift control"'}},
+   ]},
+ ]},
+
+/* ── Pr_80 SERVICES GENERAL PRODUCTS ── */
+{g:'80',title:'Services and process general products',disc:'mep',pill:'p-mep',
+ ps:{entity:['IfcFlowMeter','IfcSensor','IfcCableCarrierSegment','IfcDiscreteAccessory'],
+     pset:['Pset_FlowMeterCommon','Pset_SensorCommon','Pset_CableCarrierSegmentCommon'],
+     mat:[],
+     attrs:['PredefinedType del dispositivo','ObjectType define la función'],
+     decision:'Producto general de servicios: PredefinedType + ObjectType'},
+ subs:[
+  {s:'51',title:'Measuring and metering products',disc:'bms',pill:'p-bms',
+   ps:{entity:['IfcFlowMeter','IfcSensor'],pset:['Pset_FlowMeterCommon','Pset_SensorCommon'],mat:[],
+       attrs:['PredefinedType=ENERGYMETER / GASMETER / WATERMETER','SensorType=ENERGYMETER o FLOWSENSOR'],
+       decision:'IfcFlowMeter + PredefinedType define el tipo de contador'},
+   secs:[
+    {sec:'46',title:'Flowmeters',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcFlowMeter'],pset:['Pset_FlowMeterCommon'],mat:[],attrs:['PredefinedType=ENERGYMETER o WATERMETER'],decision:'IfcFlowMeter + PredefinedType ENERGYMETER/WATERMETER'}},
+    {sec:'85',title:'Structural instrumentation and monitoring',disc:'est',pill:'p-est2',
+     ps:{entity:['IfcSensor'],pset:['Pset_SensorCommon'],mat:[],attrs:['SensorType=STRAINGAUGESENSOR o ACCELEROMETERSENSOR','ObjectType contains "structural monitoring"'],decision:'SensorType=STRAINGAUGE o ACCELEROMETER + ObjectType "structural"'}},
+   ]},
+  {s:'77',title:'Services support and containment products',disc:'mep',pill:'p-mep',
+   ps:{entity:['IfcDiscreteAccessory','IfcBuildingElementProxy'],pset:[],mat:['IfcMaterial.Name'],
+       attrs:['ObjectType define el soporte (hanger/bracket/support/enclosure)'],
+       decision:'Soporte o carcasa de instalaciones: ObjectType'},
+   secs:[
+    {sec:'76',title:'Services insulation and protection products',disc:'mep',pill:'p-mep2',
+     ps:{entity:['IfcCovering'],pset:['Pset_CoveringCommon'],mat:['IfcMaterial.Name'],attrs:['PredefinedType=INSULATION','ObjectType contains "pipe insulation/duct insulation"','Material.Name contains "rockwool/foam/espuma"'],decision:'Aislamiento de tubería o conducto: PredefinedType=INSULATION + ObjectType'}},
+    {sec:'27',title:'Equipment boards, racks and supports',disc:'bms',pill:'p-bms2',
+     ps:{entity:['IfcDiscreteAccessory'],pset:[],mat:[],attrs:['ObjectType contains "rack/cabinet/armario técnico/equipment board"'],decision:'ObjectType "rack" o "cabinet"'}},
+   ]},
+ ]},
+
+];
+
+let openG={},openS={},selCode=null,curTab='all';
+const TABS=['all','est','arq','mep','fp','bms'];
+
+function setTab(t){
+  curTab=t;
+  TABS.forEach(x=>document.getElementById('tab-'+x).className='tab'+(x===t?' on':''));
+  buildTree();
+}
+
+function discMatch(disc){
+  if(curTab==='all') return true;
+  if(curTab==='est') return disc==='est'||disc==='both';
+  if(curTab==='arq') return disc==='arq'||disc==='both';
+  if(curTab==='mep') return disc==='mep';
+  if(curTab==='fp')  return disc==='fp';
+  if(curTab==='bms') return disc==='bms';
+}
+
+function showPs(ps){
+  const pp=document.getElementById('pp');
+  const eH=ps.entity.map(e=>`<span class="chip c-ent">${e}</span>`).join('');
+  const pH=(ps.pset||[]).map(p=>`<span class="chip c-pset">${p}</span>`).join('');
+  const mH=(ps.mat||[]).map(m=>`<span class="chip c-mat">${m}</span>`).join('');
+  const aH=(ps.attrs||[]).map(a=>`<span class="chip c-attr">${a}</span>`).join('');
+  pp.innerHTML=`
+    <div class="pset-row"><span class="pset-label">Entidad IFC</span>${eH}</div>
+    ${pH?`<div class="pset-row"><span class="pset-label">Pset</span>${pH}</div>`:''}
+    ${mH?`<div class="pset-row"><span class="pset-label">Material / dim.</span>${mH}</div>`:''}
+    <div class="pset-row"><span class="pset-label">Atributos clave</span>${aH}</div>
+    <div class="pset-row"><span class="pset-label">Decisión</span><span class="chip c-val">${ps.decision}</span></div>
+  `;
+}
+
+function setBuilder(g,s,sec,title,lit){
+  const sg=document.getElementById('sg'),ss2=document.getElementById('ss'),sc=document.getElementById('sc'),res=document.getElementById('res');
+  sg.textContent=g||'XX'; sg.className='seg'+(g?' on':'');
+  ss2.textContent=s||'XX'; ss2.className='seg'+(s?' on':'');
+  sc.textContent=sec||'XX'; sc.className='seg'+(sec?' on':'');
+  const code='Pr'+(g?'_'+g:'')+(s?'_'+s:'')+(sec?'_'+sec:'');
+  res.textContent=code+' · '+title;
+  res.className='result'+(lit?' lit':'');
+}
+
+function buildTree(){
+  const tree=document.getElementById('tree');
+  tree.innerHTML='';
+  DATA.forEach(grp=>{
+    if(!discMatch(grp.disc)) return;
+    const gr=document.createElement('div');
+    gr.className='row'+(selCode===`Pr_${grp.g}`?' sel':'');
+    gr.innerHTML=`<div class="ri d1"><span class="tog">${openG[grp.g]?'▾':'▸'}</span><span class="pill ${grp.pill}">Pr_${grp.g}</span><span class="rtitle">${grp.title} ${badge(grp.disc)}</span></div>`;
+    gr.onclick=()=>{openG[grp.g]=!openG[grp.g];selCode=`Pr_${grp.g}`;setBuilder(grp.g,'','',grp.title,false);showPs(grp.ps);buildTree()};
+    tree.appendChild(gr);
+    if(!openG[grp.g]) return;
+    grp.subs.forEach(sub=>{
+      const key=grp.g+sub.s;
+      const sr=document.createElement('div');
+      sr.className='row'+(selCode===`Pr_${grp.g}_${sub.s}`?' sel':'');
+      sr.innerHTML=`<div class="ri d2"><span class="tog">${openS[key]?'▾':'▸'}</span><span class="pill ${sub.pill}" style="opacity:.85">Pr_${grp.g}_${sub.s}</span><span class="rtitle">${sub.title} ${badge(sub.disc)}</span></div>`;
+      sr.onclick=(e)=>{e.stopPropagation();openS[key]=!openS[key];selCode=`Pr_${grp.g}_${sub.s}`;setBuilder(grp.g,sub.s,'',sub.title,false);showPs(sub.ps);buildTree()};
+      tree.appendChild(sr);
+      if(!openS[key]) return;
+      sub.secs.forEach(sec=>{
+        const code=`Pr_${grp.g}_${sub.s}_${sec.sec}`;
+        const dr=document.createElement('div');
+        dr.className='row'+(selCode===code?' sel':'');
+        dr.innerHTML=`<div class="ri d3"><span class="tog"></span><span class="pill ${sec.pill}" style="opacity:.75">${code}</span><span class="rtitle">${sec.title} ${badge(sec.disc)}</span></div>`;
+        dr.onclick=(e)=>{e.stopPropagation();selCode=code;setBuilder(grp.g,sub.s,sec.sec,sec.title,true);showPs(sec.ps);buildTree()};
+        tree.appendChild(dr);
+      });
+    });
+  });
+}
+buildTree();
+</script>
