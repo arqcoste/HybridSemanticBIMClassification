@@ -26,7 +26,7 @@ from engine.rules.pr_classifier import classify_pr
 # -----------------------------------------------
 
 st.set_page_config(
-    page_title="BIM Classification Engine",
+    page_title="UNIBIM Uniclass Classifier",
     page_icon="🏗️",
     layout="wide",
 )
@@ -330,7 +330,7 @@ def build_excel(df: pd.DataFrame) -> bytes:
     # ── Title row ───────────────────────────────────────────
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(export_cols))
     title_cell = ws.cell(row=1, column=1,
-                         value="UNIBIM · Hybrid BIM Classification Engine · Uniclass 2015")
+                         value="UNIBIM Uniclass Classifier · Uniclass 2015")
     title_cell.font      = Font(bold=True, size=13, color="1E3A5F", name="Calibri")
     title_cell.alignment = Alignment(horizontal="center", vertical="center")
     title_cell.fill      = PatternFill("solid", fgColor="E8EEF5")
@@ -434,7 +434,7 @@ def build_excel(df: pd.DataFrame) -> bytes:
 
 st.markdown("""
 <div class="main-header">
-    <h1>🏗️ BIM Classification Engine</h1>
+    <h1> UNIBIM Uniclass Classifier</h1>
     <p>Clasificación automática Uniclass 2015 &nbsp;·&nbsp; EF &nbsp;·&nbsp; Ss &nbsp;·&nbsp; Pr &nbsp;·&nbsp; desde modelos IFC</p>
 </div>
 """, unsafe_allow_html=True)
@@ -507,7 +507,7 @@ Evelio Sanchez<br>
 <br>
 <span style='font-size:0.7rem;color:#888'>
 © 2026 UNIBIM<br>
-Hybrid BIM Classification Engine<br>
+UNIBIM Uniclass Classifier<br>
 Uniclass 2015 · IFC 4
 </span>
 </div>
@@ -681,7 +681,7 @@ with tab_flow:
     st.divider()
 
     st.markdown("""
-El **Hybrid BIM Classification Engine** lee archivos IFC y asigna automáticamente
+El **UNIBIM Uniclass Classifier** lee archivos IFC y asigna automáticamente
 códigos **Uniclass 2015** (EF · Ss · Pr) a cada grupo de elementos constructivos,
 combinando reglas deterministas con inteligencia semántica.
 """)

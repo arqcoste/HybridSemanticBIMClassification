@@ -1,4 +1,4 @@
-# 🏗️ Hybrid BIM Classification Engine
+# 🏗️ UNIBIM Uniclass Classifier
 
 **Clasificación automática de modelos BIM (IFC) según Uniclass 2015**
 
