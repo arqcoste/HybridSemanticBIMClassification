@@ -1,175 +1,171 @@
-# Hybrid Semantic BIM Classification Engine
+# 🏗️ Hybrid BIM Classification Engine
 
-Classifies IFC building elements against the **Uniclass 2015** taxonomy (EF, Ss, Pr tables) using a hybrid approach: deterministic rules first, sentence-embedding cosine-similarity fallback.
+**Clasificación automática de modelos BIM (IFC) según Uniclass 2015**
 
----
-
-## Architecture
-
-```
-IFC Model
-    │
-    ▼
-[Feature Extractor]          ifc_feature_extractor.py
-    │  ifc_type, material, predefined_type,
-    │  load_bearing, is_external, spatial level…
-    │
-    ▼
-[Group by key]               group_phrases.py
-    │  ifc_type | material | type_object
-    │
-    ├──▶ [EF Classifier]     ef_classifier.py
-    │       100% deterministic rules
-    │       → EF code  (e.g. ef_20_10_30)
-    │
-    ├──▶ [SS Classifier]     ss_classifier.py + embedding_classifier.py
-    │       Deterministic rules → embedding fallback
-    │       → Ss code  (e.g. ss_20_20_75)
-    │
-    └──▶ [PR Classifier]     pr_classifier.py + embedding_classifier.py
-            Deterministic rules → embedding fallback
-            → Pr code  (e.g. pr_20_76_51_90)
-```
-
-### Classification strategy
-
-| Table | Method | Confidence |
-|-------|--------|------------|
-| **EF** — Elements to form | 100% rule-based (IFC type + material + spatial level) | Fixed |
-| **Ss** — Systems | Rules for all MEP with known discipline; embedding fallback for structural/arch | Rule: 95% / Embedding: cosine score |
-| **Pr** — Products | Rules for all typed structural and MEP; embedding fallback for untyped | Rule: 95% / Embedding: cosine score |
-
-Overall confidence per row = `min(ss_confidence, pr_confidence)`. Rows below **75%** are flagged `Revisar`.
+Desarrollado por el equipo **UNIBIM** · Zigurat Institute · 2026
 
 ---
 
-## Project structure
+## ¿Qué hace esta herramienta?
+
+Esta aplicación lee archivos de modelo BIM en formato **IFC** y asigna automáticamente códigos de clasificación **Uniclass 2015** a cada elemento constructivo. El resultado es un reporte en Excel con los códigos EF, Ss y Pr de cada elemento, junto con un indicador de confianza.
+
+### ¿Qué es Uniclass 2015?
+
+Es el sistema de clasificación de la construcción más usado en proyectos BIM. Organiza los elementos en tres categorías:
+
+| Código | Nombre | Ejemplo |
+|--------|--------|---------|
+| **EF** | Entity Facets — tipo de entidad | Elemento estructural, instalación, cerramiento |
+| **Ss** | Systems — sistema o subsistema | Sistema de climatización, estructura de hormigón |
+| **Pr** | Products — producto específico | Viga de acero, tubería PVC, luminaria LED |
+
+---
+
+## ¿Cómo funciona el motor de clasificación?
+
+El motor analiza cada grupo de elementos del modelo IFC en tres pasos:
+
+1. **Lee y agrupa los elementos** del archivo IFC por tipo, material y nombre.
+2. **Aplica reglas deterministas** — conjuntos de reglas basadas en el tipo IFC y la disciplina del modelo (estructural, HVAC, eléctrico, etc.). Si una regla coincide, la confianza es del 95%.
+3. **Si ninguna regla aplica**, usa inteligencia semántica: convierte el elemento en una frase descriptiva, la compara con los 2 712 códigos Ss y 8 441 códigos Pr oficiales de Uniclass usando similitud semántica, y elige el más parecido.
+
+El **nivel de confianza** final es el mínimo entre la confianza del código Ss y el código Pr. Si es menor al 75%, el elemento se marca como **⚠️ Revisar** para revisión manual.
+
+---
+
+## Instalación paso a paso
+
+> **Requisitos previos:** tener Python instalado en tu computador.  
+> Si no lo tienes, descárgalo desde [python.org](https://www.python.org/downloads/) — marca la opción **"Add Python to PATH"** al instalar.
+
+### Paso 1 — Descargar el código
+
+Haz clic en el botón verde **Code → Download ZIP** en esta página y extrae la carpeta en tu computador.
+
+O si usas Git:
+```
+git clone https://github.com/<usuario>/HybridSemanticBIMClassification.git
+```
+
+### Paso 2 — Descargar el modelo de inteligencia artificial
+
+El modelo de lenguaje especializado en construcción se distribuye por separado por su tamaño.
+
+1. Ve a la sección **[Releases](../../releases)** de este repositorio.
+2. Descarga el archivo `model_package.zip` del release **"Modelo Embedding V01"**.
+3. Extrae el ZIP **dentro de la carpeta del proyecto** — mantén la estructura de carpetas tal como viene.
+
+Después de extraer, deberías ver estas carpetas:
+```
+HybridSemanticBIMClassification/
+├── models/
+│   └── construction_embedding_model/   ← del ZIP
+├── data/
+│   └── processed/                      ← del ZIP
+└── ...
+```
+
+### Paso 3 — Instalar dependencias
+
+En Windows, haz doble clic en el archivo **`setup.bat`**.
+
+Espera a que termine — verás el mensaje "Setup completado correctamente".
+
+### Paso 4 — (Opcional) Agregar tablas Uniclass
+
+Para que el reporte muestre las descripciones completas de los códigos, coloca los archivos Excel oficiales de Uniclass 2015 dentro de la carpeta `data/uniclass/`:
 
 ```
-├── multi_classifier.py              # Main entry point — processes N IFC files → CSV
+data/uniclass/
+├── Uniclass2015_EF_v1_16.xlsx
+├── Uniclass2015_Ss_v1_40.xlsx
+└── Uniclass2015_Pr_v1_40.xlsx
+```
+
+Puedes descargarlos gratis desde [uniclass.thenbs.com](https://uniclass.thenbs.com).  
+> Sin estos archivos la herramienta igualmente clasifica y asigna los códigos — solo no mostrará las descripciones de texto.
+
+---
+
+## Cómo usar la aplicación
+
+### Paso 1 — Abrir la aplicación
+
+Haz doble clic en **`run.bat`**. Se abrirá una ventana negra y unos segundos después se abrirá la aplicación en tu navegador.
+
+> Mantén la ventana negra abierta mientras usas la aplicación. Si la cierras, la aplicación se detiene.
+
+### Paso 2 — Subir los modelos IFC
+
+En el panel lateral izquierdo, haz clic en **"Modelos IFC"** y selecciona uno o más archivos `.ifc`. La herramienta detecta automáticamente la disciplina desde el nombre del archivo:
+
+| Nombre del archivo contiene | Disciplina detectada |
+|-----------------------------|----------------------|
+| `IFC-EST-...` | Estructural |
+| `IFC-HVAC-...` | Climatización |
+| `IFC-ELE-...` | Eléctrico |
+| `IFC-SAN-...` | Sanitario |
+| `IFC-PCI-...` | Protección contra incendio |
+| `IFC-ARQ-...` | Arquitectura |
+
+### Paso 3 — Clasificar
+
+Haz clic en el botón **▶ Clasificar** en el panel lateral. El proceso puede tardar unos minutos dependiendo del tamaño del modelo.
+
+### Paso 4 — Revisar resultados
+
+Una vez clasificado verás:
+
+- **Métricas** — número de grupos clasificados, porcentaje OK / Revisar, confianza promedio.
+- **Pestaña Resumen** — gráficas por estado y dominio, confianza por modelo, códigos Ss más frecuentes.
+- **Pestaña Detalle** — tabla completa con todos los grupos y sus códigos EF, Ss y Pr.
+- **Pestaña Metodología** — explicación de cómo funciona el motor.
+
+### Paso 5 — Descargar el reporte
+
+Haz clic en **⬇️ Descargar** para obtener un archivo Excel formateado con:
+- Portada con nombre del proyecto y autores
+- Colores por estado (verde = OK, ámbar = Revisar)
+- Encabezados claros y columnas ajustadas
+- Filtros automáticos
+
+---
+
+## Estructura del proyecto
+
+```
+├── app.py                           # Aplicación web (Streamlit)
+├── setup.bat                        # Instalador de dependencias (Windows)
+├── run.bat                          # Lanzador de la aplicación (Windows)
+├── requirements.txt                 # Lista de dependencias Python
 │
-├── engine/
-│   ├── ifc/
-│   │   └── ifc_feature_extractor.py # Extracts features from IfcElement objects
-│   ├── rules/
-│   │   ├── domain_classifier.py     # Detects domain (structure / mep / architecture)
-│   │   ├── ef_classifier.py         # EF deterministic classifier
-│   │   ├── ss_classifier.py         # Ss hybrid classifier
-│   │   └── pr_classifier.py         # Pr hybrid classifier
-│   └── semantic/
-│       ├── semantic_translator.py   # Builds text phrases for embedding lookup
-│       ├── group_phrases.py         # Groups IFC elements by classification key
-│       └── embedding_classifier.py  # SentenceTransformer cosine-similarity lookup
+├── engine/                          # Motor de clasificación
+│   ├── rules/                       # Reglas deterministas (EF, Ss, Pr)
+│   └── semantic/                    # Clasificador por similitud semántica
 │
 ├── data/
-│   ├── processed/                   # Pre-built vector indices (committed)
-│   │   ├── ss_vectors.npy           # Ss embeddings  (2 712 official codes)
-│   │   ├── ss_metadata.json
-│   │   ├── pr_vectors.npy           # Pr embeddings  (8 441 official codes)
-│   │   └── pr_metadata.json
-│   ├── uniclass/                    # NOT committed — user must supply
-│   │   ├── Uniclass2015_EF_v1_16.xlsx
-│   │   ├── Uniclass2015_Ss_v1_40.xlsx
-│   │   └── Uniclass2015_Pr_v1_40.xlsx
-│   └── embeddings/
-│       └── rebuild_pr_index.py      # Rebuilds Pr vector index from Excel
+│   ├── processed/                   # Índices de vectores pre-construidos (del ZIP)
+│   └── uniclass/                    # Tablas Excel Uniclass (el usuario debe aportar)
 │
-├── models/
-│   └── construction_embedding_model/ # Weights NOT committed — see Setup
-│
-└── training/
-    └── train_embedding_model.py     # Fine-tuning script (all-MiniLM-L6-v2 base)
+└── models/
+    └── construction_embedding_model/ # Modelo de lenguaje fine-tuned (del ZIP)
 ```
 
 ---
 
-## Setup
+## Autores
 
-### 1. Install dependencies
+**Equipo UNIBIM · Zigurat Institute · 2026**
 
-```bash
-pip install ifcopenshell sentence-transformers scikit-learn numpy openpyxl
-```
+| Rol | Nombre |
+|-----|--------|
+| Integrante | Alejandro Martínez |
+| Integrante | Camilo Torres |
+| Integrante | Gissela Chicaiza |
+| Integrante | Maite Castiñeira |
+| Integrante | Pablo Pinuer |
+| Integrante | Santiago Martínez Chabbert |
+| Tutor | Evelio Sanchez |
 
-### 2. Provide the embedding model
-
-The engine uses a fine-tuned `all-MiniLM-L6-v2` model stored at `models/construction_embedding_model/`.
-
-**Option A — use the base model directly** (lower accuracy on construction terms):
-```python
-# In multi_classifier.py, change model_path to:
-model_path = "sentence-transformers/all-MiniLM-L6-v2"
-```
-
-**Option B — fine-tune your own** (recommended):
-```bash
-# Place your training data at data/raw/bim_training_dataset_clean.csv
-python training/train_embedding_model.py
-```
-
-### 3. Provide Uniclass Excel tables
-
-Place the official Uniclass 2015 Excel files in `data/uniclass/`:
-- `Uniclass2015_EF_v1_16.xlsx`
-- `Uniclass2015_Ss_v1_40.xlsx`
-- `Uniclass2015_Pr_v1_40.xlsx`
-
-Available from [uniclass.thenbs.com](https://uniclass.thenbs.com).
-
-### 4. (Optional) Rebuild vector indices
-
-The pre-built indices in `data/processed/` are ready to use. If you update the Uniclass tables or change the model:
-
-```bash
-python data/embeddings/rebuild_pr_index.py
-```
-
----
-
-## Usage
-
-Edit the `IFC_FILES` list at the top of [multi_classifier.py](multi_classifier.py):
-
-```python
-IFC_FILES = [
-    r"path/to/your/model_EST.ifc",
-    r"path/to/your/model_HVAC.ifc",
-    # ...
-]
-```
-
-The discipline is auto-detected from the filename (e.g. `IFC-HVAC-001.ifc` → `hvac`).
-
-Run:
-
-```bash
-python -c "import sys; sys.stdout.reconfigure(encoding='utf-8'); exec(open('multi_classifier.py', encoding='utf-8').read())"
-```
-
-Output: `classification_results_multi.csv`
-
----
-
-## Output format
-
-| Column | Description |
-|--------|-------------|
-| `model` | Source IFC discipline (extracted from filename) |
-| `domain` | Detected domain: `structure`, `mep`, `architecture` |
-| `phrase` | Group key used for classification |
-| `count` | Number of elements in the group |
-| `element_names` | Element names with counts |
-| `ef_code` / `ef_text` | Uniclass EF classification |
-| `ss_code` / `ss_text` / `ss_source` | Uniclass Ss classification + source (`rule` / `embedding`) |
-| `pr_code` / `pr_text` / `pr_source` | Uniclass Pr classification + source (`rule` / `embedding`) |
-| `confidence` | Overall confidence percentage |
-| `flag` | `OK` (≥ 75%) or `Revisar` (< 75%) |
-
----
-
-## How confidence works
-
-- **Rule match** → fixed confidence of **95%**
-- **Embedding fallback** → cosine similarity score between the generated phrase and the best-matching Uniclass title in the vector index
-- **Overall** = `min(ss_confidence, pr_confidence)` — weakest link wins
-- Rows flagged `Revisar` typically indicate: unknown IFC types, missing material/discipline data, or elements outside current rule coverage
+© 2026 UNIBIM. Todos los derechos reservados.

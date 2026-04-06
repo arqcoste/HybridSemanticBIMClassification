@@ -53,6 +53,12 @@ data/vocabularies/
 classification_results*.csv
 
 # -----------------------------------------------
+# Model ZIP  (distributed via GitHub Releases)
+# -----------------------------------------------
+model_package.zip
+*.zip
+
+# -----------------------------------------------
 # Claude Code session data
 # -----------------------------------------------
 .claude/

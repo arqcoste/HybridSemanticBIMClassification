@@ -1,3 +1,7 @@
+ifcopenshell
 sentence-transformers
 scikit-learn
 numpy
+openpyxl
+streamlit
+pandas
