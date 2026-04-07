@@ -22,55 +22,70 @@ Es el sistema de clasificación de la construcción más usado en proyectos BIM.
 
 ---
 
-## ¿Cómo funciona el motor de clasificación?
+## ¿Cómo funciona?
 
 El motor analiza cada grupo de elementos del modelo IFC en tres pasos:
 
 1. **Lee y agrupa los elementos** del archivo IFC por tipo, material y nombre.
-2. **Aplica reglas deterministas** — conjuntos de reglas basadas en el tipo IFC y la disciplina del modelo (estructural, HVAC, eléctrico, etc.). Si una regla coincide, la confianza es del 95%.
-3. **Si ninguna regla aplica**, usa inteligencia semántica: convierte el elemento en una frase descriptiva, la compara con los 2 712 códigos Ss y 8 441 códigos Pr oficiales de Uniclass usando similitud semántica, y elige el más parecido.
+2. **Aplica reglas deterministas** basadas en el tipo IFC y la disciplina del modelo. Si una regla coincide, la confianza es del 95%.
+3. **Si ninguna regla aplica**, usa inteligencia semántica: compara el elemento con los 2 712 códigos Ss y 8 441 códigos Pr oficiales de Uniclass y elige el más parecido.
 
 El **nivel de confianza** final es el mínimo entre la confianza del código Ss y el código Pr. Si es menor al 75%, el elemento se marca como **⚠️ Revisar** para revisión manual.
 
 ---
 
-## Instalación paso a paso
+## Instalación — solo la primera vez
 
-> **Requisitos previos:** tener Python instalado en tu computador.  
-> Si no lo tienes, descárgalo desde [python.org](https://www.python.org/downloads/) — marca la opción **"Add Python to PATH"** al instalar.
+### Requisito previo: instalar Python
+
+Si no tienes Python instalado:
+
+1. Ve a [python.org/downloads](https://www.python.org/downloads/) y descarga la versión más reciente.
+2. Ejecuta el instalador.
+3. **Importante:** marca la casilla **"Add Python to PATH"** antes de hacer clic en Install.
+
+---
 
 ### Paso 1 — Descargar el código
 
-Haz clic en el botón verde **Code → Download ZIP** en esta página y extrae la carpeta en tu computador.
+En esta página haz clic en el botón verde **Code → Download ZIP** y extrae la carpeta en tu computador (por ejemplo en el Escritorio).
 
-O si usas Git:
+---
+
+### Paso 2 — Descargar el modelo de IA
+
+El modelo de lenguaje especializado en construcción se distribuye por separado por su tamaño (~105 MB).
+
+1. En esta página busca la sección **Releases** en el panel derecho y haz clic en ella.
+2. Abre el release **"Modelo Embedding V01"** y descarga `model_package.zip`.
+3. Abre el ZIP — verás dos carpetas adentro: `models/` y `data/`.
+4. Copia **el contenido** de esas dos carpetas dentro de la carpeta del proyecto que descargaste en el Paso 1.
+
+> ⚠️ **Importante:** no copies la carpeta `model_package` completa — copia lo que hay **dentro** de ella (`models/` y `data/`). Si Windows pregunta si deseas fusionar carpetas, haz clic en **Sí**.
+
+Al terminar, la carpeta del proyecto debe verse así:
+
 ```
-git clone https://github.com/<usuario>/HybridSemanticBIMClassification.git
-```
-
-### Paso 2 — Descargar el modelo de inteligencia artificial
-
-El modelo de lenguaje especializado en construcción se distribuye por separado por su tamaño.
-
-1. Ve a la sección **[Releases](../../releases)** de este repositorio.
-2. Descarga el archivo `model_package.zip` del release **"Modelo Embedding V01"**.
-3. Extrae el ZIP **dentro de la carpeta del proyecto** — mantén la estructura de carpetas tal como viene.
-
-Después de extraer, deberías ver estas carpetas:
-```
-HybridSemanticBIMClassification/
+UNIBIMUniclassClassifier/
 ├── models/
-│   └── construction_embedding_model/   ← del ZIP
+│   └── construction_embedding_model/   ← vino del ZIP
 ├── data/
-│   └── processed/                      ← del ZIP
+│   └── processed/                      ← vino del ZIP
+├── app.py
+├── setup.bat
+├── run.bat
 └── ...
 ```
 
+---
+
 ### Paso 3 — Instalar dependencias
 
-En Windows, haz doble clic en el archivo **`setup.bat`**.
+Abre la carpeta del proyecto y haz doble clic en **`setup.bat`**.
 
-Espera a que termine — verás el mensaje "Setup completado correctamente".
+Se abrirá una ventana negra que instalará todo automáticamente. Espera a que termine y ciérrala.
+
+---
 
 ### Paso 4 — (Opcional) Agregar tablas Uniclass
 
@@ -83,7 +98,8 @@ data/uniclass/
 └── Uniclass2015_Pr_v1_40.xlsx
 ```
 
-Puedes descargarlos gratis desde [uniclass.thenbs.com](https://uniclass.thenbs.com).  
+Descárgalos gratis desde [uniclass.thenbs.com](https://uniclass.thenbs.com).
+
 > Sin estos archivos la herramienta igualmente clasifica y asigna los códigos — solo no mostrará las descripciones de texto.
 
 ---
@@ -92,16 +108,22 @@ Puedes descargarlos gratis desde [uniclass.thenbs.com](https://uniclass.thenbs.c
 
 ### Paso 1 — Abrir la aplicación
 
-Haz doble clic en **`run.bat`**. Se abrirá una ventana negra y unos segundos después se abrirá la aplicación en tu navegador.
+Haz doble clic en **`run.bat`**.
+
+Se abrirá una ventana negra y unos segundos después el navegador se abrirá automáticamente en `http://localhost:8501`.
 
 > Mantén la ventana negra abierta mientras usas la aplicación. Si la cierras, la aplicación se detiene.
 
+---
+
 ### Paso 2 — Subir los modelos IFC
 
-En el panel lateral izquierdo, haz clic en **"Modelos IFC"** y selecciona uno o más archivos `.ifc`. La herramienta detecta automáticamente la disciplina desde el nombre del archivo:
+En el panel lateral izquierdo haz clic en **"Modelos IFC"** y selecciona uno o más archivos `.ifc`.
 
-| Nombre del archivo contiene | Disciplina detectada |
-|-----------------------------|----------------------|
+La herramienta detecta automáticamente la disciplina desde el nombre del archivo:
+
+| El nombre del archivo contiene | Disciplina detectada |
+|-------------------------------|----------------------|
 | `IFC-EST-...` | Estructural |
 | `IFC-HVAC-...` | Climatización |
 | `IFC-ELE-...` | Eléctrico |
@@ -109,26 +131,28 @@ En el panel lateral izquierdo, haz clic en **"Modelos IFC"** y selecciona uno o 
 | `IFC-PCI-...` | Protección contra incendio |
 | `IFC-ARQ-...` | Arquitectura |
 
+---
+
 ### Paso 3 — Clasificar
 
-Haz clic en el botón **▶ Clasificar** en el panel lateral. El proceso puede tardar unos minutos dependiendo del tamaño del modelo.
+Haz clic en **▶ Clasificar** en el panel lateral y espera. El tiempo depende del tamaño del modelo.
+
+---
 
 ### Paso 4 — Revisar resultados
 
-Una vez clasificado verás:
+Al terminar verás:
 
-- **Métricas** — número de grupos clasificados, porcentaje OK / Revisar, confianza promedio.
-- **Pestaña Resumen** — gráficas por estado y dominio, confianza por modelo, códigos Ss más frecuentes.
-- **Pestaña Detalle** — tabla completa con todos los grupos y sus códigos EF, Ss y Pr.
+- **Métricas** — grupos clasificados, porcentaje OK / Revisar, confianza promedio.
+- **Pestaña Resumen** — gráficas por estado y dominio.
+- **Pestaña Detalle** — tabla completa con códigos EF, Ss y Pr por elemento.
 - **Pestaña Metodología** — explicación de cómo funciona el motor.
+
+---
 
 ### Paso 5 — Descargar el reporte
 
-Haz clic en **⬇️ Descargar** para obtener un archivo Excel formateado con:
-- Portada con nombre del proyecto y autores
-- Colores por estado (verde = OK, ámbar = Revisar)
-- Encabezados claros y columnas ajustadas
-- Filtros automáticos
+Haz clic en **⬇️ Descargar** para obtener un Excel formateado con colores, encabezados y filtros automáticos.
 
 ---
 
@@ -139,17 +163,12 @@ Haz clic en **⬇️ Descargar** para obtener un archivo Excel formateado con:
 ├── setup.bat                        # Instalador de dependencias (Windows)
 ├── run.bat                          # Lanzador de la aplicación (Windows)
 ├── requirements.txt                 # Lista de dependencias Python
-│
 ├── engine/                          # Motor de clasificación
-│   ├── rules/                       # Reglas deterministas (EF, Ss, Pr)
-│   └── semantic/                    # Clasificador por similitud semántica
-│
 ├── data/
-│   ├── processed/                   # Índices de vectores pre-construidos (del ZIP)
+│   ├── processed/                   # Índices de vectores (del ZIP del modelo)
 │   └── uniclass/                    # Tablas Excel Uniclass (el usuario debe aportar)
-│
 └── models/
-    └── construction_embedding_model/ # Modelo de lenguaje fine-tuned (del ZIP)
+    └── construction_embedding_model/ # Modelo de lenguaje (del ZIP del modelo)
 ```
 
 ---
